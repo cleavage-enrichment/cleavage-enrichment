@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite build --watch --emptyOutDir --base /static/ --outDir ../backend/static/dev",
-    "build": "vite build --base /static/ --outDir ../backend/static/prod",
+    "dev": "vite build --watch --emptyOutDir --outDir ../backend/static/dev",
+    "build": "vite build --outDir ../backend/static/prod",
     "lint": "eslint .",
     "preview": "vite preview"
   },

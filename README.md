@@ -1,25 +1,36 @@
 # cleavage-enrichment
-
-
 tools:
 backend:
 - django
 - poetry for python version managing
-frontend: react
-poetry
+frontend:
+- react
+- vite
+- pnpm
 
 
 # setup
+## backend
 - install poetry
-- cd backend; poetry install; poetry run
+- cd backend; poetry install
 
-# start django
-poetry run python manage.py runserver
+# run server
+## backend
+- poetry run python manage.py runserver
 
-# update python packages
-- poetry update
+## frontend
+- pnpm run dev
 
-# repo build
+### build new frontend
+- for production: pnpm build
+- for development: pnpm dev
+
+# update
+## python packages
+- update all: poetry update
+- add something: poetry add ...
+
+# how the repo was build
 poetry new backend
 cd backend
 poetry config virtualenvs.in-project true --local

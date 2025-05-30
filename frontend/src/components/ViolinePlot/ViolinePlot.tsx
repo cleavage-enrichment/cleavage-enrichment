@@ -3,55 +3,41 @@ import Plot from "react-plotly.js";
 
 
 
-export const ViolinePlot: React.FC<ViolinePlotProps> = ({sample}) => {
-  const proteinLength = sample.intensity.length;  
-
+export const ViolinePlot: React.FC<ViolinePlotProps> = ({samples}) => {
   const PlotColors = {
     peptideIntensity: "#4A536A",
     peptideCount : "#CE5A5A"
   };
 
-  const dataBar = [
-    {
-      y: sample.intensity,
-      name: 'Intensity',
-      type: 'bar',
-      marker: { color: PlotColors.peptideIntensity },
-      hovertemplate: 'Intensity: %{y}<extra>Position: %{x}</extra>',
-      yaxis: "y1",
-    },
-    {
-      y: sample.peptideCount.map(v=> -v*100),
-      customdata: sample.peptideCount,
-      name: 'Peptite Count',
-      type: 'bar',
-      marker: { color: PlotColors.peptideCount },
-      hovertemplate: 'Intensity: %{customdata}<extra>Position: %{x}</extra>',
-      yaxis: "y1",
-    },
-    {
-      y: sample.intensity,
-      name: 'Intensity',
-      type: 'bar',
-      marker: { color: PlotColors.peptideIntensity },
-      hovertemplate: 'Intensity: %{y}<extra>Position: %{x}</extra>',
-      yaxis: "y2",
-      showlegend: false
-    },
-    {
-      y: sample.peptideCount.map(v=> -v*100),
-      customdata: sample.peptideCount,
-      name: 'Peptite Count',
-      type: 'bar',
-      marker: { color: PlotColors.peptideCount },
-      hovertemplate: 'Intensity: %{customdata}<extra>Position: %{x}</extra>',
-      yaxis: "y2",
-      showlegend: false
-    }
-]
+  const maximumIntensity = Math.max(...samples.map(s => Math.max(...s.intensity)));
+  const maximumCount = Math.max(...samples.map(s => Math.max(...s.peptideCount)));
 
+  var data = 
+    samples.flatMap((sample, index) => ([
+      {
+        x: Array.from({ length: sample.intensity.length }, (_, i) => i + 1),
+        y: sample.intensity,
+        name: 'Intensity',
+        type: 'bar',
+        marker: { color: PlotColors.peptideIntensity },
+        hovertemplate: 'Intensity: %{y}<extra>Position: %{x}</extra>',
+        yaxis: "y"+(index+1),
+        showlegend: index === 0 ? true : false
+      },
+      {
+        x: Array.from({ length: sample.intensity.length }, (_, i) => i + 1),
+        y: sample.peptideCount.map(v=> -v*100),
+        customdata: sample.peptideCount,
+        name: 'Peptite Count',
+        type: 'bar',
+        marker: { color: PlotColors.peptideCount },
+        hovertemplate: 'Intensity: %{customdata}<extra>Position: %{x}</extra>',
+        yaxis: "y"+(index+1),
+        showlegend: index === 0 ? true : false
+      },
+    ]));
 
-  const layoutBar = {
+  const layout = {
     title: {
       text: 'Cleavage Analysis',
     },
@@ -60,38 +46,34 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({sample}) => {
         text: 'Amino acid position',
       }
     },
-    yaxis: {
-      // range: [-Math.max(...sample.peptideCount), Math.max(...sample.intensity)],
-      tickvals: [-1000, 0, 1000],
-      ticktext: [10, 0, 1000],
-      title: {
-        text: "Protein 1"
-      }
-    },
-    yaxis2:{
-      tickvals: [-1000, 0, 1000],
-      ticktext: [10, 0, 1000],
-      title: {
-        text: "Protein 2"
-      }
+    ...samples.reduce((acc, sample, i) => {
+      const yaxisKey = i === 0 ? 'yaxis' : `yaxis${i + 1}`;
+      acc[yaxisKey] = {
+        // range: [-Math.max(...sample.peptideCount)*100, Math.max(...sample.intensity)],
+        range: [-maximumCount*100, maximumIntensity],
+        tickvals: [-1000, 0, 1000],
+        ticktext: [10, 0, 1000],
+        title: { text: sample.proteinName }
+      };
+      return acc;
+    }, {} as Record<string, any>),
+
+    legend: {
+      y: 1.1,
+      orientation: 'h',
     },
 
     bargap: 0,
     barmode: 'overlay',
     grid: {
-      rows: 2,
+      rows: samples.length,
       columns: 1,
       pattern: 'coupled',
     },
-    height: 500,
+    height: 250 + samples.length * 100, // Adjust height based on number of samples
   };
 
   return (
-    <>
-      <div className="bg-white shadow-lg rounded-xl p-6 w-full max-w-3xl">
-        {/* <h2 className="text-xl font-semibold mb-4">Peptide Intensity and Count Distribution</h2> */}
-        <Plot className="w-full h-[1500px]" data={dataBar} layout={layoutBar} config={{ responsive: true }} />
-      </div>
-    </>
+    <Plot className="w-full" data={data} layout={layout} config={{ responsive: true }} />
   );
 }

@@ -4,6 +4,6 @@ type Sample = {
   peptideCount: number[];
 };
 
-export interface ViolinePlotProps {
-  samples: Sample[],
+export interface HeatmapProps {
+  sample: Sample[];
 }

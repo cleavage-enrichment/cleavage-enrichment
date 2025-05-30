@@ -1,8 +1,6 @@
 import React from 'react'; 
 import './App.css'; 
-import { ProteinView } from './components/proteinview';
-import { ProteinViewColor } from './components/ProteinViewColor';
-import { ViolinePlot} from './components/ViolinePlot';
+import { ViolinePlot } from './components/ViolinePlot';
 
 
 const protein = "MKWVTFISLLFLFSSAYSRGVFRRDTHKSEIAHRFKDLGEMKWVTFISLLFLFSSAYSRGVFRRDTHKSEIAHRFKDLGEMKWVTFISLLFLFSSAYSRGVFRRDTHKSEIAHRFKDLGEMKWVTFISLLFLFSSAYSRGVFRRDTHKSEIAHRFKDLGEMKWVTFISLLFLFSSAYSRGVFRRDTHKSEIAHRFKDLGE"; // Example sequence
@@ -35,8 +33,7 @@ const sampleData = {
 function App() { 
   return (
     <>
-      {/* <ProteinView protein={protein} peptides={peptides} className="w-1000"/> */}
-      {/* <ProteinViewColor protein={protein} peptides={peptides} /> */}
+      <input type='file' className='w-full bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded-md px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-300 shadow-sm focus:shadow'/>
       <ViolinePlot sample={sampleData}/>
     </>
   ); 

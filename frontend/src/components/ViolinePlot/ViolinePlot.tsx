@@ -18,7 +18,6 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({sample}) => {
       type: 'bar',
       marker: { color: PlotColors.peptideIntensity },
       hovertemplate: 'Intensity: %{y}<extra>Position: %{x}</extra>',
-      // xaxis: "x1",
       yaxis: "y1",
     },
     {
@@ -28,7 +27,6 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({sample}) => {
       type: 'bar',
       marker: { color: PlotColors.peptideCount },
       hovertemplate: 'Intensity: %{customdata}<extra>Position: %{x}</extra>',
-      // xaxis: "x1",
       yaxis: "y1",
     },
     {
@@ -37,7 +35,6 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({sample}) => {
       type: 'bar',
       marker: { color: PlotColors.peptideIntensity },
       hovertemplate: 'Intensity: %{y}<extra>Position: %{x}</extra>',
-      // xaxis: "x2",
       yaxis: "y2",
       showlegend: false
     },
@@ -48,7 +45,6 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({sample}) => {
       type: 'bar',
       marker: { color: PlotColors.peptideCount },
       hovertemplate: 'Intensity: %{customdata}<extra>Position: %{x}</extra>',
-      // xaxis: "x2",
       yaxis: "y2",
       showlegend: false
     }

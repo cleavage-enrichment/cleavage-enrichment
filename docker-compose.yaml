@@ -3,4 +3,4 @@ services:
     container_name: cleavage-enrichment
     build: .
     ports:
-      - "80:8000"
+      - "8000:8000"

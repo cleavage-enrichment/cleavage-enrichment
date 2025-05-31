@@ -5,5 +5,5 @@ type Sample = {
 };
 
 export interface ViolinePlotProps {
-  samples: Sample[],
+  samples: Sample[];
 }

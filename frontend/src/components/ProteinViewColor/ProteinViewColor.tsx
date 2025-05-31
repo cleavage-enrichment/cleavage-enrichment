@@ -2,9 +2,8 @@ import { JSX } from "react";
 import { styled } from "styled-components";
 import { ProteinViewColorProps } from "./ProteinViewColor.props";
 
-
 const Table = styled.table`
- border-collapse: collapse;
+  border-collapse: collapse;
 `;
 
 const Cell = styled.td`
@@ -40,13 +39,15 @@ const aminoAcidColors: { [aa: string]: string } = {
   W: "bg-pink-300",
   Y: "bg-purple-300",
   // fallback color if unknown
-  X: "bg-gray-200"
+  X: "bg-gray-200",
 };
 
+export const ProteinViewColor: React.FC<ProteinViewColorProps> = ({
+  protein,
+  peptides,
+}) => {
+  const proteinLength = protein.length;
 
-export const ProteinViewColor: React.FC<ProteinViewColorProps> = ({protein, peptides}) => {
-  const proteinLength = protein.length;  
-  
   return (
     <div className="overflow-auto">
       <Table className="table-fixed border-collapse">
@@ -54,7 +55,10 @@ export const ProteinViewColor: React.FC<ProteinViewColorProps> = ({protein, pept
           {/* Protein sequence row */}
           <tr>
             {protein.split("").map((aa, index) => (
-              <Cell key={index} className={aminoAcidColors[aa] || aminoAcidColors["X"]}>
+              <Cell
+                key={index}
+                className={aminoAcidColors[aa] || aminoAcidColors["X"]}
+              >
                 {aa}
               </Cell>
             ))}
@@ -66,26 +70,28 @@ export const ProteinViewColor: React.FC<ProteinViewColorProps> = ({protein, pept
 
             // Empty cells before the peptide starts
             for (let i = 0; i < peptide.start - 1; i++) {
-              cells.push(
-                <Cell key={`empty-${i}`}/>
-              );
+              cells.push(<Cell key={`empty-${i}`} />);
             }
 
             // Cells for the peptide sequence
             for (let j = 0; j < peptide.sequence.length; j++) {
               cells.push(
-                <Cell key={`peptide-${j}`} className={aminoAcidColors[peptide.sequence[j]] || aminoAcidColors["X"]}>
+                <Cell
+                  key={`peptide-${j}`}
+                  className={
+                    aminoAcidColors[peptide.sequence[j]] || aminoAcidColors["X"]
+                  }
+                >
                   {peptide.sequence[j]}
-                </Cell>
+                </Cell>,
               );
             }
 
             // Fill remaining cells to maintain full row length
-            const remaining = proteinLength - (peptide.start - 1 + peptide.sequence.length);
+            const remaining =
+              proteinLength - (peptide.start - 1 + peptide.sequence.length);
             for (let k = 0; k < remaining; k++) {
-              cells.push(
-                <Cell key={`filler-${k}`}/>
-              );
+              cells.push(<Cell key={`filler-${k}`} />);
             }
 
             return <tr key={rowIndex}>{cells}</tr>;
@@ -94,4 +100,4 @@ export const ProteinViewColor: React.FC<ProteinViewColorProps> = ({protein, pept
       </Table>
     </div>
   );
-}
+};

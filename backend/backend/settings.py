@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-wcml%pwrqqd_1mptf5&+y^ytd+s(7)o!^3z&-*(ggtpqvzxqv!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["cleavage.jkrohn.de", "localhost", "127.0.0.1", "0.0.0.0"]
 
 
 # Application definition

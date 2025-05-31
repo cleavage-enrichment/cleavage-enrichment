@@ -30,6 +30,7 @@ frontend:
 ## python packages
 - update all: poetry update
 - add something: poetry add ...
+- lock: poetry lock
 
 # how the repo was build
 poetry new backend

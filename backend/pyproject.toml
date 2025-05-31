@@ -10,11 +10,20 @@ requires-python = ">=3.10,<4.0"
 dependencies = [
     "django (>=5.2,<6.0)",
     "django-types (>=0.20.0,<0.21.0)",
-    "django-stubs-ext (>=5.2.0,<6.0.0)"
+    "django-stubs-ext (>=5.2.0,<6.0.0)",
+    "gunicorn (>=23.0.0,<24.0.0)",
+    "whitenoise (>=6.9.0,<7.0.0)"
 ]
 
 [tool.poetry]
+name = "backend"
+version = "0.1.0"
+description = ""
+authors = [
+    "Jonas Krohn jonas.krohn@gmx.de"
+]
 packages = [{include = "backend", from = "src"}]
+package-mode = false
 
 
 [tool.poetry.group.dev.dependencies]

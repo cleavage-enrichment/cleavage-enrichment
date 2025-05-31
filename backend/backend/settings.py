@@ -31,17 +31,17 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'frontend',
+    'cleavage_enrichment',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -117,14 +117,14 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_BASE = BASE_DIR / "static"
-REACT_JS_BUILD_DIR = STATICFILES_BASE / "prod"
-if DEBUG:
-    REACT_JS_BUILD_DIR = STATICFILES_BASE / "dev"
 
 STATICFILES_DIRS = [
     STATICFILES_BASE,
-    REACT_JS_BUILD_DIR
 ]
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

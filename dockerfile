@@ -36,7 +36,5 @@ EXPOSE 8000
 
 WORKDIR /app/backend
 
-# CMD ["sleep", "infinity"]
-
 # Start server
 CMD ["gunicorn", "backend.wsgi:application", "--bind", "0.0.0.0:8000"]

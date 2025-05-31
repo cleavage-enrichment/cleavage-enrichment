@@ -19,7 +19,8 @@ frontend:
 - poetry run python manage.py runserver
 
 ## frontend
-- pnpm run dev
+- pnpm install
+- pnpm start
 
 ### build new frontend
 - for production: pnpm build

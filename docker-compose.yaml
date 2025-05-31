@@ -1,9 +1,0 @@
-services:
-  web:
-    build: .
-#    command: # cd backend # gunicorn backend.wsgi:application --bind 0.0.0.0:8000
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-    container_name: cleavage-enrichment

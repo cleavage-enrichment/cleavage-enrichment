@@ -1,7 +1,10 @@
 import { ViolinePlotProps } from "./ViolinePlot.props";
 import Plot from "react-plotly.js";
 
-export const ViolinePlot: React.FC<ViolinePlotProps> = ({ samples }) => {
+export const ViolinePlot: React.FC<ViolinePlotProps> = ({
+  samples,
+  useLogScale = true,
+}) => {
   const PlotColors = {
     peptideIntensity: "#4A536A",
     peptideCount: "#CE5A5A",
@@ -14,10 +17,12 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({ samples }) => {
     ...samples.map((s) => Math.max(...s.peptideCount)),
   );
 
+  const countFactor = maximumIntensity / maximumCount;
+
   var data = samples.flatMap((sample, index) => [
     {
       x: Array.from({ length: sample.intensity.length }, (_, i) => i + 1),
-      y: sample.intensity,
+      y: sample.intensity.map((v) => v),
       name: "Intensity",
       type: "bar",
       marker: { color: PlotColors.peptideIntensity },
@@ -27,7 +32,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({ samples }) => {
     },
     {
       x: Array.from({ length: sample.intensity.length }, (_, i) => i + 1),
-      y: sample.peptideCount.map((v) => -v * 100),
+      y: sample.peptideCount.map((v) => -v * countFactor),
       customdata: sample.peptideCount,
       name: "Peptite Count",
       type: "bar",
@@ -37,6 +42,30 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({ samples }) => {
       showlegend: index === 0 ? true : false,
     },
   ]);
+
+  function getPositiveLinearTicks(max, countPerSide = 2) {
+    if (max <= 0) {
+      throw new Error("Max must be greater than zero.");
+    }
+
+    const step = max / (countPerSide + 1);
+    return Array.from(
+      { length: countPerSide },
+      (_, i) => Math.round((i + 1) * step * 100) / 100,
+    );
+  }
+
+  function getNegativeLinearTicks(min, countPerSide = 2) {
+    if (min >= 0) {
+      throw new Error("Min must be less than zero.");
+    }
+
+    const step = Math.abs(min) / (countPerSide + 1);
+    return Array.from(
+      { length: countPerSide },
+      (_, i) => -Math.round((countPerSide - i) * step),
+    );
+  }
 
   const layout = {
     title: {
@@ -52,10 +81,21 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({ samples }) => {
         const yaxisKey = i === 0 ? "yaxis" : `yaxis${i + 1}`;
         acc[yaxisKey] = {
           // range: [-Math.max(...sample.peptideCount)*100, Math.max(...sample.intensity)],
-          range: [-maximumCount * 100, maximumIntensity],
-          tickvals: [-1000, 0, 1000],
-          ticktext: [10, 0, 1000],
+          range: [-maximumCount * countFactor, maximumIntensity],
+          tickvals: [
+            ...getNegativeLinearTicks(-maximumCount).map(
+              (v) => v * countFactor,
+            ),
+            0,
+            ...getPositiveLinearTicks(maximumIntensity),
+          ],
+          ticktext: [
+            ...getNegativeLinearTicks(-maximumCount),
+            0,
+            ...getPositiveLinearTicks(maximumIntensity),
+          ],
           title: { text: sample.proteinName },
+          type: "linear",
         };
         return acc;
       },

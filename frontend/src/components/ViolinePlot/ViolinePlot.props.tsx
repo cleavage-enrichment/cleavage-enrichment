@@ -6,4 +6,5 @@ type Sample = {
 
 export interface ViolinePlotProps {
   samples: Sample[];
+  useLogScale: boolean;
 }

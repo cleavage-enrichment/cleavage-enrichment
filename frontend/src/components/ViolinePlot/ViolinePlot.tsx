@@ -37,7 +37,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       name: "Peptite Count",
       type: "bar",
       marker: { color: PlotColors.peptideCount },
-      hovertemplate: "Intensity: %{customdata}<extra>Position: %{x}</extra>",
+      hovertemplate: "Count: %{customdata}<extra>Position: %{x}</extra>",
       yaxis: "y" + (index + 1),
       showlegend: index === 0 ? true : false,
     },
@@ -90,7 +90,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
             ...getPositiveLinearTicks(maximumIntensity),
           ],
           ticktext: [
-            ...getNegativeLinearTicks(-maximumCount),
+            ...getNegativeLinearTicks(-maximumCount).map((v) => -v),
             0,
             ...getPositiveLinearTicks(maximumIntensity),
           ],

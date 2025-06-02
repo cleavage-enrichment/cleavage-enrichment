@@ -1,7 +1,7 @@
 type Sample = {
-  proteinName: string;
-  intensity: number[];
-  peptideCount: number[];
+  protein_id: string;
+  peptide_count: number[];
+  peptide_intensity: number[];
 };
 
 export interface HeatmapProps {

@@ -2,8 +2,16 @@ import { HeatmapProps } from "./Heatmap.props";
 import Plot from "react-plotly.js";
 
 export const Heatmap: React.FC<HeatmapProps> = ({ sample }) => {
+  if (!sample || sample.length === 0) {
+    return (
+      <div className="text-center text-gray-500">
+        Please select at least one protein to show the heatmap.
+      </div>
+    ); // Or return a placeholder/message if you prefer
+  }
+
   const numberOfProteins = sample.length;
-  const intensities: number[][] = sample.map((s) => s.intensity);
+  const intensities: number[][] = sample.map((s) => s.peptide_intensity);
   const maximumLength = Math.max(...intensities.map((i) => i.length));
 
   const extendedIntensities: number[][] = intensities.map((i) =>
@@ -19,7 +27,7 @@ export const Heatmap: React.FC<HeatmapProps> = ({ sample }) => {
   const data = [
     {
       x: Array.from({ length: maximumLength }, (_, i) => i + 1),
-      y: sample.map((s) => s.proteinName),
+      y: sample.map((s) => s.protein_id),
       z: extendedIntensities,
       name: "Intensity",
       type: "heatmap",

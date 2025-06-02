@@ -10,19 +10,30 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
     peptideCount: "#CE5A5A",
   };
 
+  if (samples.length === 0) {
+    return (
+      <div className="text-center text-gray-500">
+        Please select at least one protein to show the barplot.
+      </div>
+    );
+  }
+
   const maximumIntensity = Math.max(
-    ...samples.map((s) => Math.max(...s.intensity)),
+    ...samples.map((s) => Math.max(...s.peptide_intensity)),
   );
   const maximumCount = Math.max(
-    ...samples.map((s) => Math.max(...s.peptideCount)),
+    ...samples.map((s) => Math.max(...s.peptide_count)),
   );
 
   const countFactor = maximumIntensity / maximumCount;
 
   var data = samples.flatMap((sample, index) => [
     {
-      x: Array.from({ length: sample.intensity.length }, (_, i) => i + 1),
-      y: sample.intensity.map((v) => v),
+      x: Array.from(
+        { length: sample.peptide_intensity.length },
+        (_, i) => i + 1,
+      ),
+      y: sample.peptide_intensity.map((v) => v),
       name: "Intensity",
       type: "bar",
       marker: { color: PlotColors.peptideIntensity },
@@ -31,9 +42,12 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       showlegend: index === 0 ? true : false,
     },
     {
-      x: Array.from({ length: sample.intensity.length }, (_, i) => i + 1),
-      y: sample.peptideCount.map((v) => -v * countFactor),
-      customdata: sample.peptideCount,
+      x: Array.from(
+        { length: sample.peptide_intensity.length },
+        (_, i) => i + 1,
+      ),
+      y: sample.peptide_count.map((v) => -v * countFactor),
+      customdata: sample.peptide_count,
       name: "Peptite Count",
       type: "bar",
       marker: { color: PlotColors.peptideCount },
@@ -49,9 +63,8 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
     }
 
     const step = max / (countPerSide + 1);
-    return Array.from(
-      { length: countPerSide },
-      (_, i) => Math.round((i + 1) * step * 100) / 100,
+    return Array.from({ length: countPerSide }, (_, i) =>
+      Math.round((i + 1) * step),
     );
   }
 
@@ -94,7 +107,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
             0,
             ...getPositiveLinearTicks(maximumIntensity),
           ],
-          title: { text: sample.proteinName },
+          title: { text: sample.protein_id },
           type: "linear",
         };
         return acc;

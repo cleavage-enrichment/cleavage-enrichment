@@ -58,8 +58,8 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
   ]);
 
   function getPositiveLinearTicks(max, countPerSide = 2) {
-    if (max <= 0) {
-      throw new Error("Max must be greater than zero.");
+    if (max < 0) {
+      throw new Error("Max must not be lower than zero.");
     }
 
     const step = max / (countPerSide + 1);
@@ -69,8 +69,8 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
   }
 
   function getNegativeLinearTicks(min, countPerSide = 2) {
-    if (min >= 0) {
-      throw new Error("Min must be less than zero.");
+    if (min > 0) {
+      throw new Error("Min must not be greater than zero.");
     }
 
     const step = Math.abs(min) / (countPerSide + 1);

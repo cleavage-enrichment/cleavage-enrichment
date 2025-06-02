@@ -6,8 +6,8 @@
   "scripts": {
     "prepare": "cd .. && husky",
     "start": "vite",
-    "dev-donotuse": "vite build --watch --emptyOutDir --outDir ../backend/static/dev",
-    "build": "vite build --emptyOutDir --outDir ../backend/static/",
+    "dev-donotuse": "vite build --watch --emptyOutDir --outDir ../backend/static/frontend/dev",
+    "build": "vite build --emptyOutDir --outDir ../backend/static/frontend",
     "lint": "eslint .",
     "preview": "vite preview",
     "format": "prettier --write ."

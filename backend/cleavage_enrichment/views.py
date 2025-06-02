@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 
 def index(request):
-    file_path = os.path.join(settings.STATICFILES_BASE, 'index.html')
+    file_path = settings.STATICFILES_BASE / 'frontend' / 'index.html'
     return FileResponse(open(file_path, 'rb'), content_type='text/html')
 
 proteindata: pd.DataFrame = None

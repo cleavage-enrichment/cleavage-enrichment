@@ -66,7 +66,7 @@ function App() {
           <ViolinePlot samples={sampleData} useLogScale={false} />
         </div>
         <div className="flex items-center justify-center">
-          <Heatmap sample={sampleData} useLogScale={false} />
+          <Heatmap sample={sampleData} />
         </div>
       </div>
     </div>

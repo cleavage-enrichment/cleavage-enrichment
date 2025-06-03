@@ -26,6 +26,11 @@ frontend:
 - for production: pnpm build
 - for development: pnpm dev
 
+# run docker
+- sudo apt-get install git-lfs
+- git lfs install
+- git clone
+
 # update
 ## python packages
 - update all: poetry update

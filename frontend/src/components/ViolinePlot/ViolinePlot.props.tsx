@@ -1,10 +1,11 @@
 type Sample = {
   protein_id: string;
-  peptide_intensity: number[];
-  peptide_count: number[];
+  data_pos: number[];
+  data_neg: number[];
 };
 
 export interface ViolinePlotProps {
   samples: Sample[];
-  useLogScale: boolean;
+  useLogScaleYPos?: boolean;
+  useLogScaleYNeg?: boolean;
 }

@@ -26,7 +26,7 @@ function App() {
   };
 
   const loadOptions = (inputValue, callback) => {
-    fetch(`/api/getproteins?filter=${inputValue}`)
+    fetch(`/api/getproteins?filter=${inputValue}&limit=6`)
       .then((res) => res.json())
       .then((data) => {
         const options = (data.proteins || []).map((p) => ({

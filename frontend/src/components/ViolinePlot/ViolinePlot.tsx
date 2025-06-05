@@ -3,7 +3,8 @@ import Plot from "react-plotly.js";
 
 export const ViolinePlot: React.FC<ViolinePlotProps> = ({
   samples,
-  useLogScale = true,
+  useLogScaleYPos = false,
+  useLogScaleYNeg = false,
 }) => {
   const PlotColors = {
     peptideIntensity: "#4A536A",
@@ -19,21 +20,16 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
   }
 
   const maximumIntensity = Math.max(
-    ...samples.map((s) => Math.max(...s.peptide_intensity)),
+    ...samples.map((s) => Math.max(...s.data_pos)),
   );
-  const maximumCount = Math.max(
-    ...samples.map((s) => Math.max(...s.peptide_count)),
-  );
+  const maximumCount = Math.max(...samples.map((s) => Math.max(...s.data_neg)));
 
   const countFactor = maximumIntensity / maximumCount;
 
   var data = samples.flatMap((sample, index) => [
     {
-      x: Array.from(
-        { length: sample.peptide_intensity.length },
-        (_, i) => i + 1,
-      ),
-      y: sample.peptide_intensity.map((v) => v),
+      x: Array.from({ length: sample.data_pos.length }, (_, i) => i + 1),
+      y: sample.data_pos.map((v) => v),
       name: "Intensity",
       type: "bar",
       marker: { color: PlotColors.peptideIntensity },
@@ -42,12 +38,9 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       showlegend: index === 0 ? true : false,
     },
     {
-      x: Array.from(
-        { length: sample.peptide_intensity.length },
-        (_, i) => i + 1,
-      ),
-      y: sample.peptide_count.map((v) => -v * countFactor),
-      customdata: sample.peptide_count,
+      x: Array.from({ length: sample.data_pos.length }, (_, i) => i + 1),
+      y: sample.data_neg.map((v) => -v * countFactor),
+      customdata: sample.data_neg,
       name: "Peptite Count",
       type: "bar",
       marker: { color: PlotColors.peptideCount },

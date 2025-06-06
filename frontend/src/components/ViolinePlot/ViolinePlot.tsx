@@ -1,10 +1,12 @@
-import { ViolinePlotProps } from "./ViolinePlot.props";
+import { ViolinePlotProps, Sample } from "./ViolinePlot.props";
 import Plot from "react-plotly.js";
 
 export const ViolinePlot: React.FC<ViolinePlotProps> = ({
   samples,
   useLogScaleYPos = false,
   useLogScaleYNeg = false,
+  logarithmizeDataPos = false,
+  logarithmizeDataNeg = false,
 }) => {
   const PlotColors = {
     peptideIntensity: "#4A536A",
@@ -19,28 +21,55 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
     );
   }
 
-  const maximumIntensity = Math.max(
-    ...samples.map((s) => Math.max(...s.data_pos)),
-  );
-  const maximumCount = Math.max(...samples.map((s) => Math.max(...s.data_neg)));
+  // log data
+  const data = samples.map((sample) => ({
+    ...sample,
+    data_pos: sample.data_pos.map((v) =>
+      logarithmizeDataPos ? Math.log10(v) : v,
+    ),
+    data_neg: sample.data_neg.map((v) =>
+      logarithmizeDataNeg ? Math.log10(v) : v,
+    ),
+  }));
 
-  const countFactor = maximumIntensity / maximumCount;
+  // max and min for y-axis scaling
+  const maxYPos = Math.max(...data.map((s) => Math.max(...s.data_pos)));
+  const maxYNeg = Math.max(...data.map((s) => Math.max(...s.data_neg)));
 
-  var data = samples.flatMap((sample, index) => [
+  const maxScaledYPos = useLogScaleYPos ? Math.log10(maxYPos) : maxYPos;
+  const maxScaledYNeg = useLogScaleYNeg ? Math.log10(maxYNeg) : maxYNeg;
+  const factorYNeg = -(maxScaledYPos / maxScaledYNeg);
+
+  // scale data for visulaisation (log, negative bars, pos and neg scaling)
+  var scaledData: Sample[] = data.map((sample) => ({
+    ...sample,
+    data_pos: sample.data_pos.map((v) => (useLogScaleYPos ? Math.log10(v) : v)),
+    data_neg: sample.data_neg.map((v) => (useLogScaleYNeg ? Math.log10(v) : v)),
+  }));
+
+  function formatLabelValue(value: number): string {
+    return value >= 100
+      ? Number(value.toPrecision(3)).toExponential()
+      : String(Number(value.toPrecision(3)));
+  }
+
+  //plot data
+  const plotlyData = scaledData.flatMap((sample, index) => [
     {
       x: Array.from({ length: sample.data_pos.length }, (_, i) => i + 1),
-      y: sample.data_pos.map((v) => v),
+      y: sample.data_pos,
+      customdata: data[index].data_pos.map((v) => formatLabelValue(v)),
       name: "Intensity",
       type: "bar",
       marker: { color: PlotColors.peptideIntensity },
-      hovertemplate: "Intensity: %{y}<extra>Position: %{x}</extra>",
+      hovertemplate: "Intensity: %{customdata}<extra>Position: %{x}</extra>",
       yaxis: "y" + (index + 1),
       showlegend: index === 0 ? true : false,
     },
     {
       x: Array.from({ length: sample.data_pos.length }, (_, i) => i + 1),
-      y: sample.data_neg.map((v) => -v * countFactor),
-      customdata: sample.data_neg,
+      y: sample.data_neg.map((v) => v * factorYNeg),
+      customdata: data[index].data_neg.map((v) => formatLabelValue(v)),
       name: "Peptite Count",
       type: "bar",
       marker: { color: PlotColors.peptideCount },
@@ -50,30 +79,45 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
     },
   ]);
 
-  function getPositiveLinearTicks(max, countPerSide = 2) {
-    if (max < 0) {
-      throw new Error("Max must not be lower than zero.");
-    }
-
-    const step = max / (countPerSide + 1);
-    return Array.from({ length: countPerSide }, (_, i) =>
-      Math.round((i + 1) * step),
+  function ticksForSide(max: number, tickCount = 2) {
+    const step: number = max / (tickCount + 1);
+    return Array.from({ length: tickCount }, (_, i) =>
+      Number(Math.round((i + 1) * step).toPrecision(1)),
     );
   }
 
-  function getNegativeLinearTicks(min, countPerSide = 2) {
-    if (min > 0) {
-      throw new Error("Min must not be greater than zero.");
-    }
+  var negativeTickValues,
+    negativeTickText,
+    positiveTickValues,
+    positiveTickText;
+  positiveTickValues = ticksForSide(maxScaledYPos);
+  positiveTickText = useLogScaleYPos
+    ? positiveTickValues.map((v) => Math.pow(10, v))
+    : positiveTickValues;
 
-    const step = Math.abs(min) / (countPerSide + 1);
-    return Array.from(
-      { length: countPerSide },
-      (_, i) => -Math.round((countPerSide - i) * step),
+  if (useLogScaleYNeg) {
+    negativeTickValues = ticksForSide(maxScaledYNeg)
+      .reverse()
+      .map((v) => v * factorYNeg);
+    negativeTickText = negativeTickValues.map((v) =>
+      Math.pow(10, Math.round(v / factorYNeg)),
     );
+  } else {
+    negativeTickText = ticksForSide(maxYNeg).reverse();
+    negativeTickValues = negativeTickText.map((v) => v * factorYNeg);
   }
 
-  const layout = {
+  positiveTickText = positiveTickText.map((v) =>
+    v >= 100 ? v.toExponential() : v,
+  );
+  negativeTickText = negativeTickText.map((v) =>
+    v >= 100 ? v.toExponential() : v,
+  );
+
+  const tickValues = [...negativeTickValues, 0, ...positiveTickValues];
+  const tickText = [...negativeTickText, 0, ...positiveTickText];
+
+  const plotlyLayout = {
     title: {
       text: "Cleavage Analysis",
     },
@@ -82,24 +126,13 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
         text: "Amino acid position",
       },
     },
-    ...samples.reduce(
+    ...data.reduce(
       (acc, sample, i) => {
         const yaxisKey = i === 0 ? "yaxis" : `yaxis${i + 1}`;
         acc[yaxisKey] = {
-          // range: [-Math.max(...sample.peptideCount)*100, Math.max(...sample.intensity)],
-          range: [-maximumCount * countFactor, maximumIntensity],
-          tickvals: [
-            ...getNegativeLinearTicks(-maximumCount).map(
-              (v) => v * countFactor,
-            ),
-            0,
-            ...getPositiveLinearTicks(maximumIntensity),
-          ],
-          ticktext: [
-            ...getNegativeLinearTicks(-maximumCount).map((v) => -v),
-            0,
-            ...getPositiveLinearTicks(maximumIntensity),
-          ],
+          range: [maxScaledYNeg * factorYNeg, maxScaledYPos],
+          tickvals: tickValues,
+          ticktext: tickText,
           title: { text: sample.protein_id },
           type: "linear",
         };
@@ -116,18 +149,18 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
     bargap: 0,
     barmode: "overlay",
     grid: {
-      rows: samples.length,
+      rows: data.length,
       columns: 1,
       pattern: "coupled",
     },
-    height: 250 + samples.length * 100, // Adjust height based on number of samples
+    height: 250 + data.length * 100,
   };
 
   return (
     <Plot
       className="w-full"
-      data={data}
-      layout={layout}
+      data={plotlyData}
+      layout={plotlyLayout}
       config={{ responsive: true }}
     />
   );

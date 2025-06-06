@@ -62,8 +62,8 @@ def getPlotDataHelper(protein_id):
     if peptides.empty:
         return {
             "protein_id": protein_id,
-            "peptide_count": [],
-            "peptide_intensity": []
+            "data_pos": [],
+            "data_neg": []
         }
 
     last_peptide_position = int(peptides["End position"].max())
@@ -81,8 +81,8 @@ def getPlotDataHelper(protein_id):
     
     return {
         "protein_id": protein_id,
-        "peptide_count": count,
-        "peptide_intensity": intensity
+        "data_pos": intensity,
+        "data_neg": count,
     }
 
 

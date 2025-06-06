@@ -85,13 +85,13 @@ function App() {
       <div className="lg:w-full p-6 h-screen overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">Plots</h2>
         <div className="flex items-center justify-center">
-          <ViolinePlot samples={plotData} useLogScale={false} />
+          <ViolinePlot samples={plotData} />
         </div>
         <div className="flex items-center justify-center">
           <Heatmap sample={plotData} />
         </div>
         <div className="flex items-center justify-center">
-          <ViolinePlot samples={sampleData} useLogScale={false} />
+          <ViolinePlot samples={sampleData} />
         </div>
         <div className="flex items-center justify-center">
           <Heatmap sample={sampleData} />

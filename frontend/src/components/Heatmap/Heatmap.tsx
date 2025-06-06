@@ -11,7 +11,7 @@ export const Heatmap: React.FC<HeatmapProps> = ({ sample }) => {
   }
 
   const numberOfProteins = sample.length;
-  const intensities: number[][] = sample.map((s) => s.peptide_intensity);
+  const intensities: number[][] = sample.map((s) => s.data_pos);
   const maximumLength = Math.max(...intensities.map((i) => i.length));
 
   const extendedIntensities: number[][] = intensities.map((i) =>

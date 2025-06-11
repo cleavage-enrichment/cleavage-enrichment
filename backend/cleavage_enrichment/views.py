@@ -1,3 +1,4 @@
+import json
 import math
 import os
 from django.http import FileResponse
@@ -85,9 +86,15 @@ def getPlotDataHelper(protein_id):
         "data_neg": count,
     }
 
-
+@csrf_exempt
 def getPlotData(request):
-    proteins = request.GET.getlist('proteins')
+    if request.method == "POST":
+        try:
+            formData = json.loads(request.body)
+            proteins = formData.get("proteins", [])
+        except Exception:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+    
     if not proteins:
         return JsonResponse({"error": "No protein specified"}, status=400)
 

@@ -3,45 +3,21 @@ import "./App.css";
 import { ViolinePlot } from "./components/ViolinePlot";
 import { Heatmap } from "./components/Heatmap";
 import { sampleData } from "./assets/sample-data";
-import { FileUpload } from "./components/FileUpload/FileUpload";
-import Papa from "papaparse";
-import AsyncSelect from "react-select/async";
+import { Form } from "./components/Form";
+import { FormData } from "./components/Form/Form.props";
 
 function App() {
   const [plotData, setPlotData] = React.useState<any[]>([]);
 
-  const handleFileChange = (file: File, setData) => {
-    if (file) {
-      Papa.parse(file, {
-        header: true, // If your CSV has headers, set to true
-        skipEmptyLines: true,
-        complete: (results) => {
-          setData(results.data);
+  const handleFormChange = (formData: FormData) => {
+    if (formData) {
+      fetch(`/api/getplotdata`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        error: (err) => {
-          console.error("Error parsing CSV:", err);
-        },
-      });
-    }
-  };
-
-  const loadOptions = (inputValue, callback) => {
-    fetch(`/api/getproteins?filter=${inputValue}&limit=6`)
-      .then((res) => res.json())
-      .then((data) => {
-        const options = (data.proteins || []).map((p) => ({
-          value: p,
-          label: p,
-        }));
-        callback(options);
-      });
-  };
-
-  const handleSelectChange = (selectedOptions) => {
-    if (selectedOptions) {
-      const selectedValues = selectedOptions.map((option) => option.value);
-      const proteinIds = selectedValues.map((p) => "proteins=" + p).join("&");
-      fetch(`/api/getplotdata?` + proteinIds)
+        body: JSON.stringify(formData),
+      })
         .then((res) => res.json())
         .then((data) => {
           setPlotData(data["data"] || []);
@@ -55,30 +31,8 @@ function App() {
   return (
     <div className="w-full flex flex-col lg:flex-row h-screen">
       {/* <!-- Sidebar/Form --> */}
-      <div className="lg:w-1/4 w-full p-6">
-        <h2 className="text-xl font-semibold mb-4">Settings</h2>
-        <form className="space-y-4">
-          {/* <FileUpload
-            label="Protein Data"
-            onFileChange={(f) => {
-              handleFileChange(f, setProteinData);
-            }}
-          />
-          <FileUpload
-            label="Peptite Data"
-            onFileChange={(f) => {
-              handleFileChange(f, setPeptideData);
-            }}
-          /> */}
-          <AsyncSelect
-            cacheOptions
-            loadOptions={loadOptions}
-            closeMenuOnSelect={false}
-            defaultOptions
-            isMulti
-            onChange={handleSelectChange}
-          />
-        </form>
+      <div className="lg:w-1/4 w-full p-6 overflow-y-auto">
+        <Form onChange={handleFormChange} />
       </div>
 
       {/* <!-- Main Content/Plots --> */}

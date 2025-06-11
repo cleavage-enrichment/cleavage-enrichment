@@ -29,14 +29,14 @@ function App() {
   };
 
   return (
-    <div className="w-full flex flex-col lg:flex-row h-screen">
+    <div className="w-full flex flex-col lg:flex-row lg:h-screen">
       {/* <!-- Sidebar/Form --> */}
-      <div className="lg:w-1/4 w-full p-6 overflow-y-auto">
+      <div className="w-full lg:w-1/4 p-6 overflow-y-auto">
         <Form onChange={handleFormChange} />
       </div>
 
       {/* <!-- Main Content/Plots --> */}
-      <div className="lg:w-full p-6 h-screen overflow-y-auto">
+      <div className="w-full p-6 overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">Plots</h2>
         <div className="flex items-center justify-center">
           <ViolinePlot samples={plotData} />

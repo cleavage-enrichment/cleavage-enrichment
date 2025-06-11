@@ -70,7 +70,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       x: Array.from({ length: sample.data_pos.length }, (_, i) => i + 1),
       y: sample.data_neg.map((v) => v * factorYNeg),
       customdata: data[index].data_neg.map((v) => formatLabelValue(v)),
-      name: "Peptite Count",
+      name: "Peptide Count",
       type: "bar",
       marker: { color: PlotColors.peptideCount },
       hovertemplate: "Count: %{customdata}<extra>Position: %{x}</extra>",

@@ -4,12 +4,16 @@ export type FormData = {
   proteins?: string[];
   groups?: string[];
   samples?: string[];
-  log_data_y_pos?: boolean;
-  log_data_y_neg?: boolean;
-  log_scale_y_pos?: boolean;
-  log_scale_y_neg?: boolean;
+};
+
+export type PlotStyle = {
+  useLogScaleYPos: boolean;
+  useLogScaleYNeg: boolean;
+  logarithmizeDataPos: boolean;
+  logarithmizeDataNeg: boolean;
 };
 
 export interface FormProps {
   onChange: (formData: FormData) => void;
+  onStyleChange?: (style: PlotStyle) => void;
 }

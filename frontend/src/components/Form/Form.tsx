@@ -6,24 +6,28 @@ import React, { useEffect } from "react";
 // import Papa from "papaparse";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import { use } from "react";
 
-export const Form: React.FC<FormProps> = ({ onChange }) => {
+export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
   const [formData, setFormData] = React.useState<FormData>({
     proteins: [],
-
-    // sample: [],
-    // group: [],
-    // diagramType: 'heatmap',
-    // showDataBy: 'proteins',
-    // logPositiveYData: false,
-    // logNegativeYData: false,
-    // useLogScalePositiveY: false,
-    // useLogScaleNegativeY: false,
+  });
+  const [style, setStyle] = React.useState({
+    useLogScaleYPos: false,
+    useLogScaleYNeg: false,
+    logarithmizeDataPos: false,
+    logarithmizeDataNeg: false,
   });
 
   useEffect(() => {
     onChange(formData);
   }, [formData]);
+
+  useEffect(() => {
+    if (onStyleChange) {
+      onStyleChange(style);
+    }
+  }, [style]);
 
   const loadProteinOptions = (inputValue, callback) => {
     fetch(`/api/getproteins?filter=${inputValue}&limit=6`)
@@ -139,9 +143,9 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
           control={
             <Checkbox
               onChange={(e) => {
-                setFormData((prev) => ({
+                setStyle((prev) => ({
                   ...prev,
-                  log_data_y_pos: e.target.checked,
+                  logarithmizeDataPos: e.target.checked,
                 }));
               }}
             />
@@ -153,9 +157,9 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
           control={
             <Checkbox
               onChange={(e) => {
-                setFormData((prev) => ({
+                setStyle((prev) => ({
                   ...prev,
-                  log_data_y_neg: e.target.checked,
+                  logarithmizeDataNeg: e.target.checked,
                 }));
               }}
             />
@@ -167,9 +171,9 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
           control={
             <Checkbox
               onChange={(e) => {
-                setFormData((prev) => ({
+                setStyle((prev) => ({
                   ...prev,
-                  log_scale_y_pos: e.target.checked,
+                  useLogScaleYPos: e.target.checked,
                 }));
               }}
             />
@@ -181,9 +185,9 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
           control={
             <Checkbox
               onChange={(e) => {
-                setFormData((prev) => ({
+                setStyle((prev) => ({
                   ...prev,
-                  log_scale_y_neg: e.target.checked,
+                  useLogScaleYNeg: e.target.checked,
                 }));
               }}
             />

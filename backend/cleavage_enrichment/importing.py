@@ -6,8 +6,35 @@ from typing import Callable, Literal
 
 import pandas as pd
 import fastapy
+import logging
+logger = logging.getLogger(__name__)
+
 
 from backend import settings
+
+# Sample,Protein ID,Gene,iBAQ
+class ProteinDF:
+    SAMPLE = "Sample"
+    ID = "Protein ID"
+    GENE = "Gene"
+    IBAQ = "iBAQ"
+
+class PeptideDF: # Sample,Protein ID,Sequence,Intensity,PEP
+    SAMPLE = "Sample"
+    ID = "Protein ID"
+    SEQUENCE = "Sequence"
+    INTENSITY = "Intensity"
+    PEP = "PEP"
+
+class Meta:
+    SAMPLE = "Sample"
+    GROUP = "Group"
+    BATCH = "Batch"
+
+class FastaDF:
+    ID = "id"
+    DESCRIPTION = "description"
+    SEQUENCE = "sequence"
 
 class CleavageEnrichment:
     def __init__(self):
@@ -31,6 +58,11 @@ class CleavageEnrichment:
         """
         Reads a FASTA file and returns a DataFrame with protein IDs and sequences.
         Raises FileNotFoundError if the file does not exist.
+
+        returns dataframe with columns:
+        - id: Protein ID
+        - description: Description of the protein
+        - sequence: Amino acid sequence of the protein
         """
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Data file not found at {file_path}")
@@ -96,7 +128,7 @@ class CleavageEnrichment:
         Search for proteins in the dataset based on a filter string.
         """
 
-        unique_proteins = self.peptidedata["Protein ID"].dropna().unique()
+        unique_proteins = self.peptidedata[ProteinDF.ID].dropna().unique()
 
         unique_series = pd.Series(unique_proteins)
 
@@ -109,7 +141,7 @@ class CleavageEnrichment:
         Get unique groups from the metadata based on a filter string.
         """
 
-        unique_groups = self.metadata["Group"].dropna().unique()
+        unique_groups = self.metadata[Meta.GROUP].dropna().unique()
         return unique_groups.tolist()
     
     @peptides_needed
@@ -120,6 +152,23 @@ class CleavageEnrichment:
 
         unique_samples = self.peptidedata["Sample"].dropna().unique()
         return unique_samples.tolist()
+
+    @fasta_needed
+    def find_peptide_position(self, protein_sequence: str, peptide_sequence: str) -> tuple[int, int]:
+        """
+        Find the start and end positions of a peptide in a protein sequence.
+        Returns a tuple (start, end) .
+
+        start and end inclusive 1-based indexing.
+        """
+
+        start = protein_sequence.find(peptide_sequence)
+        if start == -1:
+            logging
+            logger.warning(f"Peptide sequence '{peptide_sequence}' not found in protein sequence '{protein_sequence}'.")
+        
+        end = start + len(peptide_sequence) - 1
+        return (start + 1, end + 1)
 
     @peptides_needed
     @metadata_needed
@@ -137,8 +186,6 @@ class CleavageEnrichment:
                 "data_pos": [],
                 "data_neg": []
             }
-        
-        last_peptide_position = int(peptides["End position"].max())
 
         if groups:
             samples = self.metadata[self.metadata["Group"].isin(groups)]["Sample"].unique().tolist()
@@ -148,25 +195,34 @@ class CleavageEnrichment:
 
         grouped_peptides: pd.DataFrame
         if grouping_method == "sum":
-            grouped_peptides = peptides.groupby("Sequence")["Intensity"].sum().reset_index()
+            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE, PeptideDF.ID])[PeptideDF.INTENSITY].sum().reset_index()
         elif grouping_method == "median":
-            grouped_peptides = peptides.groupby("Sequence")["Intensity"].median().reset_index()
+            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE, PeptideDF.ID])[PeptideDF.INTENSITY].median().reset_index()
         elif grouping_method == "mean":
-            grouped_peptides = peptides.groupby("Sequence")["Intensity"].mean().reset_index()
+            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE, PeptideDF.ID])[PeptideDF.INTENSITY].mean().reset_index()
         else:
             raise ValueError(f"Unknown group method: {grouping_method}")
+        
+        # Fasta information for protein
+        fasatadata = self.fastadata[self.fastadata[FastaDF.ID].str.contains(protein_id)]
+        if fasatadata.empty:
+            raise ValueError(f"Protein ID {protein_id} not found in FASTA data.")
+        if len(fasatadata) > 1:
+            ids = fasatadata[FastaDF.ID]
+            raise ValueError(f"Multiple entries found for Protein ID {protein_id} in FASTA data. Please ensure unique protein IDs. Entries: {ids.tolist()}")
+        fasatadata = fasatadata.iloc[0]
 
-        count = [0] * last_peptide_position
-        intensity = [0] * last_peptide_position
+        proteinlength = len(fasatadata[FastaDF.SEQUENCE])
+        count = [0] * proteinlength
+        intensity = [0] * proteinlength
 
         for _, peptide in grouped_peptides.iterrows():
-            # TODO start and end from fasta file
-            start = int(peptides[peptides["Sequence"] == peptide["Sequence"]].iloc[0]["Start position"]) - 1  # assuming positions are 1-based
-            end = int(peptides[peptides["Sequence"] == peptide["Sequence"]].iloc[0]["End position"])        # inclusive
-            for i in range(start, end):
+            start, end = self.find_peptide_position(fasatadata[FastaDF.SEQUENCE], peptide[PeptideDF.SEQUENCE])
+
+            for i in range(start-1, end):
                 count[i] += 1
-                if not math.isnan(peptide["Intensity"]):
-                    intensity[i] += int(peptide["Intensity"])
+                if not math.isnan(peptide[PeptideDF.INTENSITY]):
+                    intensity[i] += int(peptide[PeptideDF.INTENSITY])
 
         return {
             "protein_id": protein_id,
@@ -185,6 +241,3 @@ class CleavageEnrichment:
             data.append(self.protein_plot_data(protein_id, groups, samples, grouping_method))
 
         return data
-        
-        
-        

@@ -5,5 +5,7 @@ type Sample = {
 };
 
 export interface HeatmapProps {
-  sample: Sample[];
+  samples: Sample[];
+  logarithmizeData?: boolean;
+  useLogScale?: boolean;
 }

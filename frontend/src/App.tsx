@@ -49,13 +49,13 @@ function App() {
           <ViolinePlot samples={plotData} {...plotStyle} />
         </div>
         <div className="flex items-center justify-center">
-          <Heatmap sample={plotData} {...plotStyle} />
+          <Heatmap samples={plotData} {...plotStyle} />
         </div>
         <div className="flex items-center justify-center">
           <ViolinePlot samples={sampleData} {...plotStyle} />
         </div>
         <div className="flex items-center justify-center">
-          <Heatmap sample={sampleData} {...plotStyle} />
+          <Heatmap samples={sampleData} {...plotStyle} />
         </div>
       </div>
     </div>

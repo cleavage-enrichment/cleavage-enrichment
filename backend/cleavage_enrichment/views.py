@@ -9,104 +9,61 @@ from backend import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 
+from . import importing
+
 def index(request):
     file_path = settings.STATICFILES_BASE / 'frontend' / 'index.html'
     return FileResponse(open(file_path, 'rb'), content_type='text/html')
 
-proteindata: pd.DataFrame = None
-peptidedata: pd.DataFrame = None
-sample: str = "AD01_C1_INSOLUBLE_01"
-
-def loadProteins():
-    global proteindata
-    if proteindata is None:
-        path = settings.STATICFILES_BASE / "MaxQuantImport_1_protein_df.csv"
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Data file not found at {path}")
-        
-        proteindata = pd.read_csv(path)
-    return proteindata
-
-def loadPeptides():
-    global peptidedata
-    if peptidedata is None:
-        path = settings.STATICFILES_BASE / "PeptideImport_1_peptide_df.csv"
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Data file not found at {path}")
-        
-        peptidedata = pd.read_csv(path)
-    return peptidedata
+cleavage_enrichment = importing.CleavageEnrichment()
 
 def getProteins(request):
     """
     Search for proteins in the dataset based on a filter string.
     """
-    loadProteins()
 
     filter = request.GET.get('filter','')
-
-    global proteindata
+    proteins = cleavage_enrichment.getProteins(filter=filter)
         
-    # Example data, replace with actual data retrieval logic
-    proteins = proteindata[(proteindata["Sample"] == sample) & (proteindata["Protein ID"].str.contains(filter, case=False, na=False))].head(5)["Protein ID"].tolist()
-    
     return JsonResponse({"proteins": proteins})
 
-
-def getPlotDataHelper(protein_id):
+def getGroups(request):
     """
-    Helper function to get plot data for a specific protein.
+    Get unique groups from the metadata.
     """
     
-    peptides = peptidedata[(peptidedata["Protein ID"] == protein_id)]
-
-    if peptides.empty:
-        return {
-            "protein_id": protein_id,
-            "data_pos": [],
-            "data_neg": []
-        }
-
-    last_peptide_position = int(peptides["End position"].max())
-
-    count = [0] * last_peptide_position
-    intensity = [0] * last_peptide_position
-
-    for _, peptide in peptides.iterrows():
-        start = int(peptide["Start position"]) - 1  # assuming positions are 1-based
-        end = int(peptide["End position"])          # inclusive
-        for i in range(start, end):
-            count[i] += 1
-            if not math.isnan(peptide["Intensity"]):
-                intensity[i] += int(peptide["Intensity"])
+    groups = cleavage_enrichment.getGroups()
     
-    return {
-        "protein_id": protein_id,
-        "data_pos": intensity,
-        "data_neg": count,
-    }
+    return JsonResponse({"groups": groups})
+
+def getSamples(request):
+    """
+    Get unique samples from the metadata.
+    """
+    
+    samples = cleavage_enrichment.getSamples()
+    
+    return JsonResponse({"samples": samples})
+
 
 @csrf_exempt
 def getPlotData(request):
-    if request.method == "POST":
-        try:
-            formData = json.loads(request.body)
-            proteins = formData.get("proteins", [])
-        except Exception:
-            return JsonResponse({"error": "Invalid JSON"}, status=400)
-    
-    if not proteins:
-        return JsonResponse({"error": "No protein specified"}, status=400)
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method"}, status=405)
 
-    loadPeptides()
-
-    data = []
-
-    for protein_id in proteins:
-        data.append(getPlotDataHelper(protein_id))
+    try:
+        formData = json.loads(request.body)
+        proteins = formData.get("proteins", [])
+        groups = formData.get("groups", None)
+        samples = formData.get("samples", None)
+        grouping_method = formData.get("grouping_method", "mean")
+        print(formData)
+        print((grouping_method))
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
 
     return JsonResponse({
-        "data": data
+        "data": cleavage_enrichment.get_plot_data(proteins, groups, samples, grouping_method)
     })
 
     

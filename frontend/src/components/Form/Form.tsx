@@ -9,15 +9,15 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import { use } from "react";
 
 export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
-  const [formData, setFormData] = React.useState<FormData>({
-    proteins: [],
-  });
+  const [formData, setFormData] = React.useState<FormData>({});
   const [style, setStyle] = React.useState({
     useLogScaleYPos: false,
     useLogScaleYNeg: false,
     logarithmizeDataPos: false,
     logarithmizeDataNeg: false,
   });
+  const [samples, setSamples] = React.useState([]);
+  const [groups, setGroups] = React.useState([]);
 
   useEffect(() => {
     onChange(formData);
@@ -40,6 +40,35 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
         callback(options);
       });
   };
+
+  function loadGroupOptions() {
+    fetch(`/api/getgroups`)
+      .then((res) => res.json())
+      .then((data) => {
+        const options = (data.groups || []).map((p) => ({
+          value: p,
+          label: p,
+        }));
+        setGroups(options);
+      });
+  }
+
+  function loadSampleOptions() {
+    fetch(`/api/getsamples`)
+      .then((res) => res.json())
+      .then((data) => {
+        const options = (data.samples || []).map((p) => ({
+          value: p,
+          label: p,
+        }));
+        setSamples(options);
+      });
+  }
+
+  useEffect(() => {
+    loadGroupOptions();
+    loadSampleOptions();
+  }, []);
 
   return (
     <>
@@ -101,13 +130,10 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
           }}
         />
 
-        <label htmlFor="groups-select">Group(s)</label>
-        <AsyncSelect
-          inputId="groups-select"
-          cacheOptions
-          // loadOptions={loadProteinOptions}
-          closeMenuOnSelect={false}
-          defaultOptions
+        <label htmlFor="groups">Group(s)</label>
+        <Select
+          inputId="groups"
+          options={groups}
           isMulti
           onChange={(selectedOptions) => {
             const groups = selectedOptions
@@ -120,12 +146,9 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
         />
 
         <label htmlFor="samples-select">Sample(s)</label>
-        <AsyncSelect
+        <Select
           inputId="samples-select"
-          cacheOptions
-          // loadOptions={loadProteinOptions}
-          closeMenuOnSelect={false}
-          defaultOptions
+          options={samples}
           isMulti
           onChange={(selectedOptions) => {
             const samples = selectedOptions
@@ -134,6 +157,25 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
                 ).map((option) => option.value)
               : [];
             setFormData((prev) => ({ ...prev, samples: samples }));
+          }}
+        />
+
+        <label htmlFor="grouping-method">Grouping Method</label>
+        <Select
+          inputId="grouping-method"
+          options={[
+            { value: "median", label: "Median" },
+            { value: "mean", label: "Mean" },
+            { value: "sum", label: "Sum" },
+          ]}
+          onChange={(selectedOption) => {
+            const grouping_method = selectedOption
+              ? selectedOption.value
+              : "median";
+            setFormData((prev) => ({
+              ...prev,
+              grouping_method: grouping_method,
+            }));
           }}
         />
 

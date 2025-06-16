@@ -4,6 +4,7 @@ export type FormData = {
   proteins?: string[];
   groups?: string[];
   samples?: string[];
+  grouping_method?: string;
 };
 
 export type PlotStyle = {

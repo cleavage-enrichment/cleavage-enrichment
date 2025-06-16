@@ -32,7 +32,7 @@ function App() {
   return (
     <div className="w-full flex flex-col lg:flex-row lg:h-screen">
       {/* <!-- Sidebar/Form --> */}
-      <div className="w-full lg:w-1/4 p-6 overflow-y-auto">
+      <div className="w-full lg:w-1/4 p-6 lg:overflow-y-auto overflow-visible">
         <Form
           onChange={handleFormChange}
           onStyleChange={(style) => {

@@ -103,6 +103,18 @@ typing-extensions = {version = ">=4.6.0", markers = "python_version < \"3.13\""}
 test = ["pytest (>=6)"]
 
 [[package]]
+name = "fastapy"
+version = "1.0.5"
+description = "A lightweight Python module to read and write FASTA sequence records"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "fastapy-1.0.5-py3-none-any.whl", hash = "sha256:214749fc6d945e435533ca920c81e823f050aa56538b5e4bfde2e276c3a69c06"},
+    {file = "fastapy-1.0.5.tar.gz", hash = "sha256:55ef76b0ded9071420023d64ca52f857b891db85157afe3e8be7b0f7ea027f1b"},
+]
+
+[[package]]
 name = "gunicorn"
 version = "23.0.0"
 description = "WSGI HTTP Server for UNIX"
@@ -492,4 +504,4 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "3b2d4aec7de62c0d73bd0d125536cff6b8a3968741f4a9944b9a7879b3eeed10"
+content-hash = "39161c89158ebe69398ab667e8e97d48b14d11f392e0128d181f58518f053bc9"

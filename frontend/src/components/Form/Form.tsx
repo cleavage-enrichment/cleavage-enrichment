@@ -76,13 +76,13 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
 
   return (
     <>
-      <h2 className="text-xl font-semibold mb-4">Settings</h2>
       <form className="space-y-4">
+        <h2 className="text-xl font-semibold mb-4">File Uploads</h2>
+        <h3>(FASTA upload)</h3>
         <h3>(Petide upload)</h3>
         <h3>(Metadate upload)</h3>
-        <h3>(FASTA upload)</h3>
 
-        <h3>-----</h3>
+        <h2 className="text-xl font-semibold mb-4">Diagram Settings</h2>
         <label htmlFor="plot-type">Diagram type</label>
         <Select
           inputId="plot-type"
@@ -177,7 +177,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
           }}
         />
 
-        <h2 className="text-xl font-semibold mb-4">Plot modifications</h2>
+        <h2 className="text-xl font-semibold mb-4">Plot Modifications</h2>
 
         <FormControlLabel
           control={

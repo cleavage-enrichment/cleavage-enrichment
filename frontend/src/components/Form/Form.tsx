@@ -6,7 +6,11 @@ import React, { useEffect } from "react";
 // import Papa from "papaparse";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import { use } from "react";
+
+type OptionType = {
+  value: string;
+  label: string;
+};
 
 export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
   const [formData, setFormData] = React.useState<FormData>({});
@@ -16,8 +20,8 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
     logarithmizeDataPos: false,
     logarithmizeDataNeg: false,
   });
-  const [samples, setSamples] = React.useState([]);
-  const [groups, setGroups] = React.useState([]);
+  const [samples, setSamples] = React.useState<OptionType[]>([]);
+  const [groups, setGroups] = React.useState<OptionType[]>([]);
 
   useEffect(() => {
     onChange(formData);
@@ -122,9 +126,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
           isMulti
           onChange={(selectedOptions) => {
             const proteins = selectedOptions
-              ? (
-                  selectedOptions as Array<{ value: string; label: string }>
-                ).map((option) => option.value)
+              ? (selectedOptions as OptionType[]).map((option) => option.value)
               : [];
             setFormData((prev) => ({ ...prev, proteins: proteins }));
           }}
@@ -137,9 +139,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
           isMulti
           onChange={(selectedOptions) => {
             const groups = selectedOptions
-              ? (
-                  selectedOptions as Array<{ value: string; label: string }>
-                ).map((option) => option.value)
+              ? selectedOptions.map((option) => option.value)
               : [];
             setFormData((prev) => ({ ...prev, groups: groups }));
           }}
@@ -152,9 +152,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
           isMulti
           onChange={(selectedOptions) => {
             const samples = selectedOptions
-              ? (
-                  selectedOptions as Array<{ value: string; label: string }>
-                ).map((option) => option.value)
+              ? selectedOptions.map((option) => option.value)
               : [];
             setFormData((prev) => ({ ...prev, samples: samples }));
           }}

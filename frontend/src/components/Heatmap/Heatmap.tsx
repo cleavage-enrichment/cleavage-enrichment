@@ -1,12 +1,12 @@
-import { HeatmapProps } from "./Heatmap.props";
+import { HeatmapProps, Sample } from "./Heatmap.props";
 import Plot from "react-plotly.js";
 
 export const Heatmap: React.FC<HeatmapProps> = ({
-  samples,
+  heatmapdata,
   logarithmizeData = false,
-  useLogScale = true,
+  useLogScale = false,
 }) => {
-  if (!samples || samples.length === 0) {
+  if (!heatmapdata || heatmapdata.samples.length === 0) {
     return (
       <div className="text-center text-gray-500">
         Please select at least one protein to show the heatmap.
@@ -14,32 +14,27 @@ export const Heatmap: React.FC<HeatmapProps> = ({
     );
   }
 
-  type Sample = {
-    sample_name: string;
-    data: number[];
-  };
-
-  const numberOfSamples = samples.length;
-  const data: Sample[] = samples.map((s) => ({
-    sample_name: s.protein_id,
-    data: s.data_pos,
-  }));
+  const numberOfSamples = heatmapdata.samples.length;
+  var samples;
 
   // logarithmize data if needed
   if (logarithmizeData) {
-    data.forEach((s) => {
-      s.data = s.data.map((v) => (v > 0 ? Math.log10(v) : 0));
-    });
+    samples = heatmapdata.samples.map((s) => ({
+      ...s,
+      data: s.data.map((v) => (v > 0 ? Math.log10(v) : 0)),
+    }));
+  } else {
+    samples = heatmapdata.samples;
   }
 
   // Extend all data to the same max length
-  const maximumLength = Math.max(...data.map((i) => i.data.length));
-  data.forEach((s) => {
+  const maximumLength = Math.max(...samples.map((i) => i.data.length));
+  samples.forEach((s) => {
     s.data = s.data.concat(Array(maximumLength - s.data.length));
   });
 
   // loged data for loged scaling
-  const logedData = data.map((s) => ({
+  const logedData = samples.map((s) => ({
     ...s,
     data: s.data.map((v) => (v > 0 ? Math.log10(v) : 0)),
   }));
@@ -69,16 +64,20 @@ export const Heatmap: React.FC<HeatmapProps> = ({
     if (logMax - logMin > 3) {
       step = Math.floor(step); // round to have ticks 10, 100, 1000, etc.
     }
+    if (step === 0) {
+      step = 1; // Prevents endless loop
+    }
 
     for (let i = logMin; i <= logMax; i += step) {
       tickvals.push(i); // log-scale
-      ticktext.push(formatValue(10 ** i)); // original value
+      const original = i == 0 ? 0 : 10 ** i;
+      ticktext.push(formatValue(original)); // original value
     }
 
     return { tickvals, ticktext, zmin: logMin, zmax: logMax };
   }
   const { tickvals, ticktext, zmin, zmax } = useLogScale
-    ? getLogTicks(data.map((s) => s.data))
+    ? getLogTicks(samples.map((s) => s.data))
     : { tickvals: [], ticktext: [], zmin: 0, zmax: 0 };
 
   function formatValue(value: number, precision: number = 3): string {
@@ -90,15 +89,17 @@ export const Heatmap: React.FC<HeatmapProps> = ({
   const plotData = [
     {
       x: Array.from({ length: maximumLength }, (_, i) => i + 1),
-      y: data.map((s) => s.sample_name),
-      z: useLogScale ? logedData.map((s) => s.data) : data.map((s) => s.data),
-      customdata: data.map((s) => s.data.map((v) => formatValue(v))),
+      y: samples.map((s) => s.label),
+      z: useLogScale
+        ? logedData.map((s) => s.data)
+        : samples.map((s) => s.data),
+      customdata: samples.map((s) => s.data.map((v) => formatValue(v))),
       type: "heatmap",
-      hovertemplate: "Intensity: %{customdata}<extra>Position: %{x}</extra>",
+      hovertemplate: `${heatmapdata.metric}: %{customdata}<extra>Position: %{x}</extra>`,
       colorscale: colors,
       colorbar: {
         title: {
-          text: "Intensity",
+          text: heatmapdata.metric,
         },
         ...(useLogScale
           ? {
@@ -119,7 +120,7 @@ export const Heatmap: React.FC<HeatmapProps> = ({
 
   const plotLayout = {
     title: {
-      text: "Cleavage Analysis",
+      text: heatmapdata.name,
     },
     xaxis: {
       title: {
@@ -128,10 +129,13 @@ export const Heatmap: React.FC<HeatmapProps> = ({
     },
     yaxis: {
       title: {
-        text: "Proteins",
+        text: heatmapdata.ylabel,
       },
     },
-    height: Math.max(250, 150 + numberOfSamples * 30),
+    height: Math.max(400, 150 + numberOfSamples * 20),
+    margin: {
+      l: 200,
+    },
   };
 
   return (

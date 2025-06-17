@@ -1,11 +1,17 @@
-type Sample = {
-  protein_id: string;
-  data_pos: number[];
-  data_neg: number[];
+export type Sample = {
+  label: string;
+  data: number[];
+};
+
+export type HeatmapData = {
+  name: string;
+  metric: string;
+  ylabel: string;
+  samples: Sample[];
 };
 
 export interface HeatmapProps {
-  samples: Sample[];
+  heatmapdata: HeatmapData;
   logarithmizeData?: boolean;
   useLogScale?: boolean;
 }

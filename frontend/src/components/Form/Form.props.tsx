@@ -5,6 +5,8 @@ export type FormData = {
   groups?: string[];
   samples?: string[];
   grouping_method?: string;
+  metric?: string;
+  group_by?: string;
 };
 
 export type PlotStyle = {

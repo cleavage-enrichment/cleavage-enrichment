@@ -53,19 +53,10 @@ def getPlotData(request):
 
     try:
         formData = json.loads(request.body)
-        proteins = formData.get("proteins", [])
-        groups = formData.get("groups", None)
-        samples = formData.get("samples", None)
-        grouping_method = formData.get("grouping_method", "mean")
-        print(formData)
-        print((grouping_method))
+        print(f"Received formData: {formData}")
     except Exception:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
     return JsonResponse({
-        "data": cleavage_enrichment.get_plot_data(proteins, groups, samples, grouping_method)
+        "data": cleavage_enrichment.get_plot_data(formData)
     })
-
-    
-
-

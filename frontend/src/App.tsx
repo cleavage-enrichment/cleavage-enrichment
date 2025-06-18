@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import { ViolinePlot } from "./components/ViolinePlot";
+import { BarplotData, ViolinePlot } from "./components/ViolinePlot";
 import { Heatmap, HeatmapData } from "./components/Heatmap";
 import { sampleData } from "./assets/sample-data";
 import { Form } from "./components/Form";
@@ -12,7 +12,7 @@ export const PlotType = {
 } as const;
 
 type Data = {
-  plot_data: HeatmapData;
+  plot_data: HeatmapData | BarplotData;
   plot_type: (typeof PlotType)[keyof typeof PlotType]; // Type of the plot (heatmap or barplot)
 };
 
@@ -60,15 +60,21 @@ function App() {
           </div>
         )}
 
-        {/* {plotData["plot_type"] === PlotType.BARPLOT &&
+        {Data && Data["plot_type"] === PlotType.BARPLOT && (
           <div className="flex items-center justify-center">
-            <ViolinePlot samples={plotData} {...plotStyle} />
+            <ViolinePlot
+              barplotData={Data.plot_data as BarplotData}
+              {...plotStyle}
+            />
           </div>
-        } */}
+        )}
 
         {Data && Data["plot_type"] === PlotType.HEATMAP && (
           <div className="flex items-center justify-center">
-            <Heatmap heatmapdata={Data.plot_data} {...plotStyle} />
+            <Heatmap
+              heatmapdata={Data.plot_data as HeatmapData}
+              {...plotStyle}
+            />
           </div>
         )}
         {/* <div className="flex items-center justify-center">

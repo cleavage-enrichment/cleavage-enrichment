@@ -2,7 +2,7 @@ import { ViolinePlotProps, Sample } from "./ViolinePlot.props";
 import Plot from "react-plotly.js";
 
 export const ViolinePlot: React.FC<ViolinePlotProps> = ({
-  samples,
+  barplotData,
   useLogScaleYPos = false,
   useLogScaleYNeg = false,
   logarithmizeDataPos = false,
@@ -13,7 +13,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
     peptideCount: "#CE5A5A",
   };
 
-  if (samples.length === 0) {
+  if (barplotData.samples.length === 0) {
     return (
       <div className="text-center text-gray-500">
         Please select at least one protein to show the barplot.
@@ -22,7 +22,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
   }
 
   // log data
-  const data = samples.map((sample) => ({
+  const data = barplotData.samples.map((sample) => ({
     ...sample,
     data_pos: sample.data_pos.map((v) =>
       logarithmizeDataPos ? Math.log10(v) : v,
@@ -33,8 +33,12 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
   }));
 
   // max and min for y-axis scaling
-  const maxYPos = Math.max(...data.map((s) => Math.max(...s.data_pos)));
-  const maxYNeg = Math.max(...data.map((s) => Math.max(...s.data_neg)));
+  var maxYPos = Math.max(...data.map((s) => Math.max(...s.data_pos)));
+  var maxYNeg = Math.max(...data.map((s) => Math.max(...s.data_neg)));
+
+  if (barplotData.reference_mode === true) {
+    maxYPos = maxYNeg = Math.max(maxYPos, maxYNeg);
+  }
 
   const maxScaledYPos = useLogScaleYPos ? Math.log10(maxYPos) : maxYPos;
   const maxScaledYNeg = useLogScaleYNeg ? Math.log10(maxYNeg) : maxYNeg;
@@ -59,18 +63,20 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       x: Array.from({ length: sample.data_pos.length }, (_, i) => i + 1),
       y: sample.data_pos,
       customdata: data[index].data_pos.map((v) => formatLabelValue(v)),
-      name: "Intensity",
+      name: sample.label_pos,
       type: "bar",
-      marker: { color: PlotColors.peptideIntensity },
+      ...(barplotData.reference_mode
+        ? {}
+        : { marker: { color: PlotColors.peptideIntensity } }),
       hovertemplate: "Intensity: %{customdata}<extra>Position: %{x}</extra>",
       yaxis: "y" + (index + 1),
-      showlegend: index === 0 ? true : false,
+      showlegend: index === 0 && !barplotData.reference_mode ? true : false,
     },
     {
       x: Array.from({ length: sample.data_pos.length }, (_, i) => i + 1),
       y: sample.data_neg.map((v) => v * factorYNeg),
       customdata: data[index].data_neg.map((v) => formatLabelValue(v)),
-      name: "Peptide Count",
+      name: sample.label_neg,
       type: "bar",
       marker: { color: PlotColors.peptideCount },
       hovertemplate: "Count: %{customdata}<extra>Position: %{x}</extra>",
@@ -78,6 +84,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       showlegend: index === 0 ? true : false,
     },
   ]);
+  console.log("Plot data:", barplotData.reference_mode);
 
   function ticksForSide(max: number, tickCount = 2) {
     const step: number = max / (tickCount + 1);
@@ -92,7 +99,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
     positiveTickText;
   positiveTickValues = ticksForSide(maxScaledYPos);
   positiveTickText = useLogScaleYPos
-    ? positiveTickValues.map((v) => Math.pow(10, v))
+    ? positiveTickValues.map((v) => (v == 0 ? 0 : Math.pow(10, v)))
     : positiveTickValues;
 
   if (useLogScaleYNeg) {
@@ -100,7 +107,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       .reverse()
       .map((v) => v * factorYNeg);
     negativeTickText = negativeTickValues.map((v) =>
-      Math.pow(10, Math.round(v / factorYNeg)),
+      v == 0 ? 0 : Math.pow(10, Math.round(v / factorYNeg)),
     );
   } else {
     negativeTickText = ticksForSide(maxYNeg).reverse();
@@ -133,7 +140,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
           range: [maxScaledYNeg * factorYNeg, maxScaledYPos],
           tickvals: tickValues,
           ticktext: tickText,
-          title: { text: sample.protein_id },
+          title: { text: sample.label },
           type: "linear",
         };
         return acc;
@@ -153,7 +160,10 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       columns: 1,
       pattern: "coupled",
     },
-    height: 250 + data.length * 100,
+    height: 250 + data.length * 200,
+    margin: {
+      t: 200,
+    },
   };
 
   return (

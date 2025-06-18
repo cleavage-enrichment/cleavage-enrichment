@@ -45,6 +45,15 @@ def getSamples(request):
     
     return JsonResponse({"samples": samples})
 
+def getBatches(request):
+    """
+    Get unique batches from the metadata.
+    """
+    
+    batches = cleavage_enrichment.getBatches()
+    
+    return JsonResponse({"batches": batches})
+
 
 @csrf_exempt
 def getPlotData(request):

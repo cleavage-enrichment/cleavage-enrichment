@@ -7,6 +7,7 @@ export type FormData = {
   grouping_method?: string;
   metric?: string;
   group_by?: string;
+  reference_group?: string;
 };
 
 export type PlotStyle = {

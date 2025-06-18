@@ -42,6 +42,7 @@ class AggregationMethod:
     MEDIAN = "median"
 
 class GroupBy:
+    PROTEIN = "protein"
     SAMPLE = "sample"
     GROUP = "group"
     BATCH = "batch"
@@ -168,6 +169,15 @@ class CleavageEnrichment:
         unique_samples = self.peptidedata["Sample"].dropna().unique()
         return unique_samples.tolist()
 
+    @metadata_needed
+    def getBatches(self):
+        """
+        Get unique batches from the metadata based on a filter string.
+        """
+
+        unique_batches = self.metadata[Meta.BATCH].dropna().unique()
+        return unique_batches.tolist()
+
     @fasta_needed
     def find_peptide_position(self, protein_sequence: str, peptide_sequence: str) -> tuple[int, int]:
         """
@@ -191,11 +201,11 @@ class CleavageEnrichment:
         """
         grouped_peptides: pd.DataFrame
         if aggregation_method == AggregationMethod.SUM:
-            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE, PeptideDF.ID])[PeptideDF.INTENSITY].sum().reset_index()
+            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE])[PeptideDF.INTENSITY].sum().reset_index()
         elif aggregation_method == AggregationMethod.MEDIAN:
-            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE, PeptideDF.ID])[PeptideDF.INTENSITY].median().reset_index()
+            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE])[PeptideDF.INTENSITY].median().reset_index()
         elif aggregation_method == AggregationMethod.MEAN:
-            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE, PeptideDF.ID])[PeptideDF.INTENSITY].mean().reset_index()
+            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE])[PeptideDF.INTENSITY].mean().reset_index()
         else:
             raise ValueError(f"Unknown group method: {aggregation_method}")
 
@@ -228,111 +238,110 @@ class CleavageEnrichment:
     @peptides_needed
     @metadata_needed
     @fasta_needed
-    def protein_plot_data(self, protein_id:str, aggregation_method:AggregationMethod, group_by:GroupBy, groups:list[str] = None, samples:list[str] = None) -> list[dict]:
+    def protein_plot_data(self, proteins:list[str], aggregation_method:AggregationMethod, group_by:GroupBy = GroupBy.PROTEIN, samples:list[str] = None, groups:list[str] = None, batches:list[str] = None) -> list[dict]:
         """
         Get plot data for a specific protein.
+
+        output:
+        [
+            {
+            "label": protein_id,
+            "count": calculated_count,
+            "intensity": calculated_intensity,
+            },
+            ...
+        ]
         """
 
-        protein_sequence = self.getProteinSequence(protein_id)
-        peptides : pd.DataFrame = self.peptidedata[self.peptidedata["Protein ID"] == protein_id]
+        peptides : pd.DataFrame = self.peptidedata[self.peptidedata["Protein ID"].isin(proteins)]
 
-        # calculated_count, calculated_intensity = self.calculate_count_sum(protein_sequence, peptides, aggregation_method)
-
-        # if groups:
-        #     samples = self.metadata[self.metadata["Group"].isin(groups)]["Sample"].unique().tolist()
-        # filter
+        metadata: pd.DataFrame = self.metadata
         if samples:
-            filtered_metadata = self.metadata[self.metadata[Meta.SAMPLE].isin(samples)]
-        elif groups:
-            filtered_metadata = self.metadata[self.metadata[Meta.GROUP].isin(groups)]
-        else:
-            filtered_metadata = self.metadata
+            metadata = metadata[self.metadata[Meta.SAMPLE].isin(samples)]
+        if groups:
+            metadata = metadata[self.metadata[Meta.GROUP].isin(groups)]
+        if batches:
+            metadata = metadata[self.metadata[Meta.BATCH].isin(batches)]
 
         output = []
 
-        if group_by == GroupBy.GROUP:
-            groups = filtered_metadata[Meta.GROUP].unique().tolist()
-            if not groups:
-                logger.error("No groups found in metadata.")
-                return []
-            
-            for group in groups:
-                samples = filtered_metadata[filtered_metadata[Meta.GROUP] == group][Meta.SAMPLE].unique().tolist()
-                if not samples:
-                    logger.warning(f"No samples found for group {group} in metadata.")
+        if group_by == GroupBy.PROTEIN:           
+            for protein_id in proteins:
+                protein_sequence = self.getProteinSequence(protein_id)
+
+                sample_peptides = peptides[peptides[PeptideDF.ID] == protein_id]
+                if sample_peptides.empty:
+                    logger.warning(f"No peptides found for protein {protein_id} in metadata.")
                     continue
 
-                sample_peptides = peptides[peptides[PeptideDF.SAMPLE].isin(samples)]
                 count, intensity = self.calculate_count_sum(protein_sequence, sample_peptides, aggregation_method)
                 output.append({
-                    OutpuKeys.LABEL: f"{group}",
+                    OutpuKeys.LABEL: f"{protein_id}",
                     OutpuKeys.COUNT: count,
                     OutpuKeys.INTENSITY: intensity,
                 })
-
-        elif group_by == GroupBy.SAMPLE:
-            samples = filtered_metadata[Meta.SAMPLE].unique().tolist()
-            if not samples:
-                logger.error("No samples found in metadata.")
-                return []
-
-            for sample in samples:
-                sample_peptides = peptides[peptides[PeptideDF.SAMPLE] == sample]
-                count, intensity = self.calculate_count_sum(protein_sequence, sample_peptides, aggregation_method)
-                output.append({
-                    OutpuKeys.LABEL: f"{sample}",
-                    OutpuKeys.COUNT: count,
-                    OutpuKeys.INTENSITY: intensity,
-                })
-
+        
+        if len(proteins) > 1:
+            logger.warning("Multiple proteins specified, grouping by sample, batch or group is not supported for multiple proteins.")
+            return output
+        
+        grouping_key = None
+        if group_by == GroupBy.SAMPLE:
+            grouping_key = Meta.SAMPLE
         elif group_by == GroupBy.BATCH:
-            batches = filtered_metadata[Meta.BATCH].unique().tolist()
-            if not batches:
-                logger.error("No batches found in metadata.")
-                return []
-            
-            for batch in batches:
-                samples = filtered_metadata[filtered_metadata[Meta.BATCH] == batch][Meta.SAMPLE].unique().tolist()
-                if not samples:
-                    logger.warning(f"No samples found for batch {batch} in metadata.")
-                    continue
+            grouping_key = Meta.BATCH
+        elif group_by == GroupBy.GROUP:
+            grouping_key = Meta.GROUP
+        else:
+            logger.error(f"Unknown group_by method: {group_by}")
+            return output
 
-                sample_peptides = peptides[peptides[PeptideDF.SAMPLE].isin(samples)]
-                count, intensity = self.calculate_count_sum(protein_sequence, sample_peptides, aggregation_method)
-                output.append({
-                    OutpuKeys.LABEL: f"{batch}",
-                    OutpuKeys.COUNT: count,
-                    OutpuKeys.INTENSITY: intensity,
-                })
+        merged = pd.merge(metadata, peptides, on=Meta.SAMPLE, how='left')
+        
+        grouped = merged.groupby(grouping_key)
+        protein_sequence = self.getProteinSequence(proteins[0])
+        
+        for group_name, group_df in grouped:
+            count, intensity = self.calculate_count_sum(protein_sequence,peptides=group_df,aggregation_method=aggregation_method)
 
-        # output:
-        # [
-        #     {
-        #     "label": protein_id,
-        #     "count": calculated_count,
-        #     "intensity": calculated_intensity,
-        #     },
-        #     ...
-        # ]
+            output.append({
+                OutpuKeys.LABEL: f"{group_name}",
+                OutpuKeys.COUNT: count,
+                OutpuKeys.INTENSITY: intensity,
+            })
 
         return output
 
 
     class PlotType:
-        """
-        Enum for different plot types.
-        """
         HEATMAP = "heatmap"
         BARPLOT = "barplot"
 
-    class HeatMapMetric:
-        """
-        Enum for different heatmap metrics.
-        """
+    class Metric:
+        INTENSITY_COUNT = "intensity_count"
         INTENSITY = "intensity"
         COUNT = "count"
     
-    def heatmap_data(self, protein = None, aggregation_method: AggregationMethod = None, metric:HeatMapMetric = None, group_by: GroupBy = None, samples: list[str] = []) -> dict:
+    def heatmap_data(self, protein = None, aggregation_method: AggregationMethod = None, metric:Metric = None, group_by: GroupBy = None, samples: list[str] = []) -> dict:
+        """
+        Output:
+        {
+            "plot_type": "heatmap",
+            "plot_data": {
+                "samples": [
+                    {
+                        "label": "Sample 1",
+                        "data": [1, 2, 3, ...]
+                    },
+                    ...
+                ],
+                "name": "Heatmap for Protein X",
+                "ylabel": "Samples",
+                "metric": "Intensity" or "Count"
+            }
+        }
+        
+        """
         output = {}
         output["plot_type"] = self.PlotType.HEATMAP
         output["plot_data"] = {}
@@ -345,10 +354,10 @@ class CleavageEnrichment:
    
         output["plot_data"]["name"] = f"Heatmap for {protein}"
 
-        if not aggregation_method and (group_by == GroupBy.SAMPLE or metric == self.HeatMapMetric.COUNT):
+        if not aggregation_method and (group_by == GroupBy.SAMPLE or metric == self.Metric.COUNT):
             aggregation_method = AggregationMethod.MEDIAN
 
-        if not aggregation_method and group_by is not GroupBy.SAMPLE and metric is not self.HeatMapMetric.INTENSITY:
+        if not aggregation_method and group_by is not GroupBy.SAMPLE and metric is not self.Metric.INTENSITY:
             logger.error("No aggregation method specified for heatmap data.")
             return output
         
@@ -359,7 +368,7 @@ class CleavageEnrichment:
         if metric is None:
             logger.error("No metric specified for heatmap data.")
             return output
-        if metric not in [self.HeatMapMetric.INTENSITY, self.HeatMapMetric.COUNT]:
+        if metric not in [self.Metric.INTENSITY, self.Metric.COUNT]:
             logger.error(f"Unknown heatmap metric: {metric}")
             return output
         
@@ -377,7 +386,7 @@ class CleavageEnrichment:
             logger.error(f"Unknown group_by method: {group_by}")
             return output
 
-        peptide_data: list[dict] = self.protein_plot_data(protein, aggregation_method=aggregation_method, group_by=group_by, samples=samples)
+        peptide_data: list[dict] = self.protein_plot_data([protein], aggregation_method=aggregation_method, group_by=group_by, samples=samples)
 
         for data in peptide_data:
             label = data[OutpuKeys.LABEL]
@@ -388,11 +397,11 @@ class CleavageEnrichment:
                 "label": label,
             }
 
-            if metric == self.HeatMapMetric.INTENSITY:
+            if metric == self.Metric.INTENSITY:
                 output["plot_data"]["metric"] = "Intensity"
                 new_sample["data"] = intensity
 
-            elif metric == self.HeatMapMetric.COUNT:
+            elif metric == self.Metric.COUNT:
                 output["plot_data"]["metric"] = "Count"
                 new_sample["data"] = count
             else:
@@ -403,18 +412,28 @@ class CleavageEnrichment:
 
         return output
     
-    class BarGroupBy:
-        """
-        Enum for different barplot group by methods.
-        """
-        PROTEIN = "protein"
-        SAMPLE = "sample"
-        GROUP = "group"
-        # BATCH = "batch"
-    
-    def barplot_data(self, group_by:BarGroupBy, proteins: None):
+
+    def barplot_data(self, group_by: GroupBy = None, proteins: list[str] = None, aggregation_method: AggregationMethod = None, metric: Metric = None, reference_group: str = None, samples: list[str] = None, groups: list[str] = None, batches: list[str] = None) -> dict:
         """
         Get barplot data for a specific protein.
+
+        Output:
+        {
+            "plot_type": "heatmap",
+            "plot_data": {
+                "samples": [
+                    {
+                        "label": "Sample 1",
+                        "data_pos": [1, 2, 3, ...]
+                        "data_neg": [0, 1, 2, ...]
+                    },
+                    ...
+                ],
+                "name": "Heatmap for Protein X",
+                # "ylabel": "Samples",
+                # "metric": "Intensity" or "Count"
+            }
+        }
         """
 
         output = {
@@ -424,31 +443,60 @@ class CleavageEnrichment:
                 "name": "Barplot",
             }
         }
+
+        if not group_by:
+            logger.error("No Group By method specified for barplot data.")
+            return output
         
         if not proteins:
             logger.error("No proteins specified for barplot data.")
             return output
-
-        #Sample:
-        # label
-        # data_pos
-        # data_neg
-        print(proteins)
-        if group_by == self.BarGroupBy.PROTEIN:
-            for protein_id in proteins:
-                count, intensity = self.protein_plot_data(protein_id)
-                output["plot_data"]["samples"].append(
-                    {
-                        "label": protein_id,
-                        "data_pos": intensity,
-                        "data_neg": count,
-                    }
-                )
-                print(output)
         
-        elif group_by == self.BarGroupBy.SAMPLE:
-            pass
+        if not aggregation_method:
+            logger.error("No aggregation method specified for barplot data.")
+            return output
+        
+        if not metric:
+            logger.error("No metric specified for barplot data.")
+            return output
 
+        peptide_data: list[dict] = self.protein_plot_data(proteins, aggregation_method=aggregation_method, group_by=group_by, samples=samples, groups=groups, batches=batches)
+
+        if reference_group and metric != self.Metric.INTENSITY_COUNT:
+            output["plot_data"]["reference_mode"] = True
+            reference_data = list(filter(lambda x: x[OutpuKeys.LABEL] == reference_group, peptide_data))
+            if len(reference_data) > 0:
+                reference_data = reference_data[0]
+            else:
+                logger.error(f"Reference group '{reference_group}' not found in peptide data. You may have not selected this gorup.")
+                return output
+            peptide_data = list(filter(lambda x: x[OutpuKeys.LABEL] != reference_group, peptide_data))
+
+        for data in peptide_data:
+            label = data[OutpuKeys.LABEL]
+            count = data[OutpuKeys.COUNT]
+            intensity = data[OutpuKeys.INTENSITY]
+
+            data_neg: list[int]
+
+            if metric == self.Metric.INTENSITY_COUNT:
+                data_neg = count
+            elif metric == self.Metric.INTENSITY and reference_group:
+                data_neg = reference_data[OutpuKeys.INTENSITY]
+            elif metric == self.Metric.COUNT and reference_group:
+                data_neg = reference_data[OutpuKeys.COUNT]
+            else:
+                data_neg = []
+
+            new_sample = {
+                "label": label,
+                "label_pos": ("Intensity" if metric != self.Metric.COUNT else "Count") + (f" for {label}" if (reference_group and metric != self.Metric.INTENSITY_COUNT) else ""),
+                "label_neg": ("Count" if metric != self.Metric.INTENSITY else "Intensity") + (f" for {reference_group}" if (reference_group and metric != self.Metric.INTENSITY_COUNT) else ""),
+                "data_pos": intensity if metric != self.Metric.COUNT else count,
+                "data_neg": data_neg,
+            }
+
+            output["plot_data"]["samples"].append(new_sample)
         return output
 
 

@@ -24,6 +24,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
   });
   const [samples, setSamples] = React.useState<OptionType[]>([]);
   const [groups, setGroups] = React.useState<OptionType[]>([]);
+  const [batches, setBatches] = React.useState<OptionType[]>([]);
 
   useEffect(() => {
     onChange(formData);
@@ -71,10 +72,40 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
       });
   }
 
+  function loadBatchOptions() {
+    fetch(`/api/getbatches`)
+      .then((res) => res.json())
+      .then((data) => {
+        const options = (data.batches || []).map((p) => ({
+          value: p,
+          label: p,
+        }));
+        setBatches(options);
+      });
+  }
+
   useEffect(() => {
     loadGroupOptions();
     loadSampleOptions();
+    loadBatchOptions();
   }, []);
+
+  // for reference_group field
+  function getReferenceGroupOptions() {
+    switch (formData.group_by) {
+      case "protein":
+        console.log(formData.proteins);
+        return formData.proteins?.map((p) => ({ value: p, label: p })) || [];
+      case "sample":
+        return samples;
+      case "group":
+        return groups;
+      case "batch":
+        return batches;
+      default:
+        return [];
+    }
+  }
 
   return (
     <>
@@ -95,7 +126,6 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
           defaultValue={{ value: "heatmap", label: "Heatmap" }}
           onChange={(selectedOption) => {
             setFormData((prev) => ({
-              ...prev,
               plot_type: selectedOption?.value,
             }));
           }}
@@ -197,17 +227,80 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               options={[
                 { value: "protein", label: "Proteins" },
                 { value: "sample", label: "Samples" },
-                { value: "group", label: "Sample Groups" },
+                { value: "group", label: "Groups" },
+                { value: "batch", label: "Batches" },
               ]}
               onChange={(selectedOption) => {
                 setFormData((prev) => ({
                   ...prev,
+                  reference_group: undefined,
                   group_by: selectedOption?.value,
                 }));
               }}
             />
 
-            <label htmlFor="protein-select">Protein(s)</label>
+            <label htmlFor="aggregation-method">
+              Aggregation Method for Intensities
+            </label>
+            <Select
+              inputId="aggregation-method"
+              options={[
+                { value: "median", label: "Median" },
+                { value: "mean", label: "Mean" },
+                { value: "sum", label: "Sum" },
+              ]}
+              onChange={(selectedOption) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  aggregation_method: selectedOption?.value,
+                }));
+              }}
+            />
+
+            <label htmlFor="metric">Metric to visualize</label>
+            <Select
+              inputId="metric"
+              options={[
+                { value: "intensity_count", label: "Intensity and Count" },
+                { value: "intensity", label: "Intensity" },
+                { value: "count", label: "Count" },
+              ]}
+              onChange={(selectedOption) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  metric: selectedOption?.value,
+                }));
+              }}
+            />
+
+            {(formData?.metric == "intensity" ||
+              formData?.metric == "count") && (
+              <>
+                <label htmlFor="reference_group">Reference Group</label>
+                <Select
+                  inputId="reference_group"
+                  options={getReferenceGroupOptions()}
+                  value={
+                    formData.reference_group
+                      ? {
+                          value: formData.reference_group,
+                          label: formData.reference_group,
+                        }
+                      : null
+                  }
+                  onChange={(selectedOption) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      reference_group: selectedOption?.value,
+                    }));
+                  }}
+                />
+              </>
+            )}
+
+            <h2 className="text-xl font-semibold mb-4">Select Data</h2>
+
+            <label htmlFor="protein-select">Proteins</label>
             <AsyncSelect
               inputId="protein-select"
               cacheOptions
@@ -225,23 +318,11 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               }}
             />
 
-            <label htmlFor="groups">Group(s)</label>
+            <label htmlFor="samples">Samples</label>
             <Select
-              inputId="groups"
-              options={groups}
-              isMulti
-              onChange={(selectedOptions) => {
-                const groups = selectedOptions
-                  ? selectedOptions.map((option) => option.value)
-                  : [];
-                setFormData((prev) => ({ ...prev, groups: groups }));
-              }}
-            />
-
-            <label htmlFor="samples-select">Sample(s)</label>
-            <Select
-              inputId="samples-select"
+              inputId="samples"
               options={samples}
+              closeMenuOnSelect={false}
               isMulti
               onChange={(selectedOptions) => {
                 const samples = selectedOptions
@@ -251,22 +332,31 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               }}
             />
 
-            <label htmlFor="grouping-method">Grouping Method</label>
+            <label htmlFor="groups">Groups</label>
             <Select
-              inputId="grouping-method"
-              options={[
-                { value: "median", label: "Median" },
-                { value: "mean", label: "Mean" },
-                { value: "sum", label: "Sum" },
-              ]}
-              onChange={(selectedOption) => {
-                const grouping_method = selectedOption
-                  ? selectedOption.value
-                  : "median";
-                setFormData((prev) => ({
-                  ...prev,
-                  grouping_method: grouping_method,
-                }));
+              inputId="groups"
+              options={groups}
+              closeMenuOnSelect={false}
+              isMulti
+              onChange={(selectedOptions) => {
+                const groups = selectedOptions
+                  ? selectedOptions.map((option) => option.value)
+                  : [];
+                setFormData((prev) => ({ ...prev, groups: groups }));
+              }}
+            />
+
+            <label htmlFor="batches">Batches</label>
+            <Select
+              inputId="batches"
+              options={batches}
+              closeMenuOnSelect={false}
+              isMulti
+              onChange={(selectedOptions) => {
+                const batches = selectedOptions
+                  ? selectedOptions.map((option) => option.value)
+                  : [];
+                setFormData((prev) => ({ ...prev, batches: batches }));
               }}
             />
           </>

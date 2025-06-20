@@ -462,7 +462,9 @@ class CleavageEnrichment:
 
         peptide_data: list[dict] = self.protein_plot_data(proteins, aggregation_method=aggregation_method, group_by=group_by, samples=samples, groups=groups, batches=batches)
 
-        if reference_group and metric != self.Metric.INTENSITY_COUNT:
+        isReferenceMode = (reference_group is not None) and (metric != self.Metric.INTENSITY_COUNT)
+
+        if isReferenceMode:
             output["plot_data"]["reference_mode"] = True
             reference_data = list(filter(lambda x: x[OutpuKeys.LABEL] == reference_group, peptide_data))
             if len(reference_data) > 0:
@@ -473,25 +475,42 @@ class CleavageEnrichment:
             peptide_data = list(filter(lambda x: x[OutpuKeys.LABEL] != reference_group, peptide_data))
 
         for data in peptide_data:
-            label = data[OutpuKeys.LABEL]
+            label = ""
             count = data[OutpuKeys.COUNT]
             intensity = data[OutpuKeys.INTENSITY]
 
-            data_neg: list[int]
+            label_pos, label_neg = "", ""
+            if metric == self.Metric.INTENSITY_COUNT:
+                label = data[OutpuKeys.LABEL]
+                output["plot_data"]["legend_pos"] = f"Intensity"
+                output["plot_data"]["legend_neg"] = f"Count"
+            if metric == self.Metric.INTENSITY:
+                output["plot_data"]["legend_pos"] = f"Intensity"
+                output["plot_data"]["legend_neg"] = f"Intensity of reference"
+                label = data[OutpuKeys.LABEL] if not isReferenceMode else ""
+                label_pos = data[OutpuKeys.LABEL]
+                label_neg = f"Reference: {reference_group}" if isReferenceMode else ""
+            if metric == self.Metric.COUNT:
+                output["plot_data"]["legend_pos"] = f"Count"
+                output["plot_data"]["legend_neg"] = f"Count of reference"
+                label = data[OutpuKeys.LABEL] if not isReferenceMode else ""
+                label_pos = data[OutpuKeys.LABEL]
+                label_neg = f" Reference: {reference_group}" if isReferenceMode else ""
 
+            data_neg: list[int]
             if metric == self.Metric.INTENSITY_COUNT:
                 data_neg = count
-            elif metric == self.Metric.INTENSITY and reference_group:
+            elif metric == self.Metric.INTENSITY and isReferenceMode:
                 data_neg = reference_data[OutpuKeys.INTENSITY]
-            elif metric == self.Metric.COUNT and reference_group:
+            elif metric == self.Metric.COUNT and isReferenceMode:
                 data_neg = reference_data[OutpuKeys.COUNT]
             else:
                 data_neg = []
 
             new_sample = {
                 "label": label,
-                "label_pos": ("Intensity" if metric != self.Metric.COUNT else "Count") + (f" for {label}" if (reference_group and metric != self.Metric.INTENSITY_COUNT) else ""),
-                "label_neg": ("Count" if metric != self.Metric.INTENSITY else "Intensity") + (f" for {reference_group}" if (reference_group and metric != self.Metric.INTENSITY_COUNT) else ""),
+                "label_pos": label_pos,
+                "label_neg": label_neg,
                 "data_pos": intensity if metric != self.Metric.COUNT else count,
                 "data_neg": data_neg,
             }

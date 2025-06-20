@@ -9,9 +9,9 @@ export type Sample = {
 export type BarplotData = {
   name: string;
   reference_mode?: boolean;
-  // metric: string;
-  // ylabel: string;
   samples: Sample[];
+  legend_pos: string;
+  legend_neg: string;
 };
 
 export interface ViolinePlotProps {

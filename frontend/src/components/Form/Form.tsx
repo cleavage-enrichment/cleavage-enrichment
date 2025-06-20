@@ -280,6 +280,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
                 <Select
                   inputId="reference_group"
                   options={getReferenceGroupOptions()}
+                  isClearable
                   value={
                     formData.reference_group
                       ? {

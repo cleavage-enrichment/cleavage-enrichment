@@ -1,9 +1,6 @@
 # software
 - it works for uniprot fasta files
 
-
-
-
 # cleavage-enrichment
 tools:
 backend:

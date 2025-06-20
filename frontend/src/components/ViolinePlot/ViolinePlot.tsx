@@ -63,20 +63,18 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       x: Array.from({ length: sample.data_pos.length }, (_, i) => i + 1),
       y: sample.data_pos,
       customdata: data[index].data_pos.map((v) => formatLabelValue(v)),
-      name: sample.label_pos,
+      name: barplotData.legend_pos,
       type: "bar",
-      ...(barplotData.reference_mode
-        ? {}
-        : { marker: { color: PlotColors.peptideIntensity } }),
+      marker: { color: PlotColors.peptideIntensity },
       hovertemplate: "Intensity: %{customdata}<extra>Position: %{x}</extra>",
       yaxis: "y" + (index + 1),
-      showlegend: index === 0 && !barplotData.reference_mode ? true : false,
+      showlegend: index === 0 ? true : false,
     },
     {
       x: Array.from({ length: sample.data_pos.length }, (_, i) => i + 1),
       y: sample.data_neg.map((v) => v * factorYNeg),
       customdata: data[index].data_neg.map((v) => formatLabelValue(v)),
-      name: sample.label_neg,
+      name: barplotData.legend_neg,
       type: "bar",
       marker: { color: PlotColors.peptideCount },
       hovertemplate: "Count: %{customdata}<extra>Position: %{x}</extra>",
@@ -84,7 +82,6 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       showlegend: index === 0 ? true : false,
     },
   ]);
-  console.log("Plot data:", barplotData.reference_mode);
 
   function ticksForSide(max: number, tickCount = 2) {
     const step: number = max / (tickCount + 1);
@@ -127,15 +124,42 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
   const plotlyLayout = {
     title: {
       text: "Cleavage Analysis",
+      font: {
+        size: 24,
+      },
     },
     xaxis: {
       title: {
         text: "Amino acid position",
       },
     },
+    annotations: [
+      ...(barplotData.reference_mode
+        ? data.flatMap((sample, i) => [
+            {
+              text: sample.label_pos,
+              x: 0,
+              y: 1,
+              xref: "x1 domain",
+              yref: `y${i + 1} domain`,
+              showarrow: false,
+              bgcolor: "#ffffffb0",
+            },
+            {
+              text: sample.label_neg,
+              x: 0,
+              y: 0,
+              xref: "x1 domain",
+              yref: `y${i + 1} domain`,
+              showarrow: false,
+              bgcolor: "#ffffffb0",
+            },
+          ])
+        : []),
+    ],
     ...data.reduce(
       (acc, sample, i) => {
-        const yaxisKey = i === 0 ? "yaxis" : `yaxis${i + 1}`;
+        const yaxisKey = `yaxis${i + 1}`;
         acc[yaxisKey] = {
           range: [maxScaledYNeg * factorYNeg, maxScaledYPos],
           tickvals: tickValues,
@@ -149,8 +173,9 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
     ),
 
     legend: {
-      y: 1.1,
-      orientation: "h",
+      font: {
+        size: 20,
+      },
     },
 
     bargap: 0,
@@ -161,9 +186,6 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       pattern: "coupled",
     },
     height: 250 + data.length * 200,
-    margin: {
-      t: 200,
-    },
   };
 
   return (

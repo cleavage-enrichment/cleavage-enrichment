@@ -185,7 +185,7 @@ export const ViolinePlot: React.FC<ViolinePlotProps> = ({
       columns: 1,
       pattern: "coupled",
     },
-    height: 250 + data.length * 200,
+    height: 150 + data.length * 200,
   };
 
   return (

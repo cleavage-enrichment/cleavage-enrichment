@@ -1,4 +1,4 @@
-import { FormProps, FormData } from "./Form.props";
+import { FormProps, FormData, Options, Option } from "./Form.props";
 import AsyncSelect from "react-select/async";
 import Select from "react-select";
 import React, { useEffect } from "react";
@@ -7,24 +7,57 @@ import React, { useEffect } from "react";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 
-type OptionType = {
-  value: string;
-  label: string;
-};
-
 export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
-  const [formData, setFormData] = React.useState<FormData>({
-    plot_type: "heatmap",
+  // Load from localStorage on first render
+  const [formData, setFormData] = React.useState<FormData>(() => {
+    const saved = localStorage.getItem("formData");
+    return saved ? JSON.parse(saved) : {};
   });
-  const [style, setStyle] = React.useState({
-    useLogScaleYPos: false,
-    useLogScaleYNeg: false,
-    logarithmizeDataPos: false,
-    logarithmizeDataNeg: false,
+  const [style, setStyle] = React.useState(() => {
+    const saved = localStorage.getItem("formStyle");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          useLogScaleYPos: false,
+          useLogScaleYNeg: false,
+          logarithmizeDataPos: false,
+          logarithmizeDataNeg: false,
+        };
   });
-  const [samples, setSamples] = React.useState<OptionType[]>([]);
-  const [groups, setGroups] = React.useState<OptionType[]>([]);
-  const [batches, setBatches] = React.useState<OptionType[]>([]);
+
+  function flattenFormData(formData: FormData) {
+    const result: Record<string, any> = {};
+    for (const [key, value] of Object.entries(formData)) {
+      if (Array.isArray(value)) {
+        // Array of Option objects
+        result[key] = value.map((v) => v.value);
+      } else if (value && typeof value === "object" && "value" in value) {
+        // Single Option object
+        result[key] = value.value;
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+
+  // Save formData to localStorage whenever it changes
+  React.useEffect(() => {
+    localStorage.setItem("formData", JSON.stringify(formData));
+    onChange(flattenFormData(formData));
+  }, [formData]);
+
+  // Save style to localStorage whenever it changes
+  React.useEffect(() => {
+    localStorage.setItem("formStyle", JSON.stringify(style));
+    if (onStyleChange) {
+      onStyleChange(style);
+    }
+  }, [style]);
+
+  const [samples, setSamples] = React.useState<Options>([]);
+  const [groups, setGroups] = React.useState<Options>([]);
+  const [batches, setBatches] = React.useState<Options>([]);
 
   useEffect(() => {
     onChange(formData);
@@ -92,10 +125,9 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
 
   // for reference_group field
   function getReferenceGroupOptions() {
-    switch (formData.group_by) {
+    switch (formData.group_by?.value) {
       case "protein":
-        console.log(formData.proteins);
-        return formData.proteins?.map((p) => ({ value: p, label: p })) || [];
+        return formData.proteins;
       case "sample":
         return samples;
       case "group":
@@ -116,32 +148,36 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
         <h3>(Metadate upload)</h3>
 
         <h2 className="text-xl font-semibold mb-4">Diagram Settings</h2>
-        <label htmlFor="plot-type">Diagram type</label>
-        <Select
-          inputId="plot-type"
+        <label htmlFor="plot_type">Diagram type</label>
+        <Select<Option>
+          inputId="plot_type"
           options={[
             { value: "heatmap", label: "Heatmap" },
             { value: "barplot", label: "Barplot" },
           ]}
+          value={formData.plot_type}
           defaultValue={{ value: "heatmap", label: "Heatmap" }}
           onChange={(selectedOption) => {
             setFormData((prev) => ({
-              plot_type: selectedOption?.value,
+              plot_type: selectedOption ?? undefined,
             }));
           }}
         />
 
-        {formData.plot_type === "heatmap" && (
+        {formData.plot_type?.value === "heatmap" && (
           <>
-            <label htmlFor="protein-select">Protein</label>
+            <label htmlFor="proteins">Protein</label>
             <AsyncSelect
-              inputId="protein-select"
+              inputId="proteins"
               cacheOptions
               loadOptions={loadProteinOptions}
+              value={formData.proteins ? formData.proteins[0] : undefined}
               defaultOptions
               onChange={(selectedOption) => {
-                const protein = (selectedOption as OptionType).value;
-                setFormData((prev) => ({ ...prev, protein: protein }));
+                setFormData((prev) => ({
+                  ...prev,
+                  proteins: selectedOption ? [selectedOption] : undefined,
+                }));
               }}
             />
 
@@ -153,27 +189,29 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
                 { value: "group", label: "Groups" },
                 { value: "batch", label: "Batches" },
               ]}
+              value={formData.group_by}
               onChange={(selectedOption) => {
                 setFormData((prev) => ({
                   ...prev,
-                  group_by: selectedOption?.value,
+                  group_by: selectedOption ?? undefined,
                 }));
               }}
             />
 
-            {formData?.group_by === "sample" && (
+            {formData.group_by?.value === "sample" && (
               <>
-                <label htmlFor="samples-select">Select Samples</label>
+                <label htmlFor="samples">Select Samples</label>
                 <Select
-                  inputId="samples-select"
+                  inputId="samples"
                   options={samples}
+                  value={formData.samples}
                   isMulti
                   closeMenuOnSelect={false}
                   onChange={(selectedOptions) => {
-                    const samples = selectedOptions
-                      ? selectedOptions.map((option) => option.value)
-                      : [];
-                    setFormData((prev) => ({ ...prev, samples: samples }));
+                    setFormData((prev) => ({
+                      ...prev,
+                      samples: selectedOptions ?? [],
+                    }));
                   }}
                 />
               </>
@@ -186,31 +224,33 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
                 { value: "intensity", label: "Intensity" },
                 { value: "count", label: "Count" },
               ]}
+              value={formData.metric}
               onChange={(selectedOption) => {
                 setFormData((prev) => ({
                   ...prev,
-                  metric: selectedOption?.value,
+                  metric: selectedOption ?? undefined,
                 }));
               }}
             />
 
-            {formData?.metric === "intensity" &&
-              formData?.group_by != "sample" && (
+            {formData.metric?.value === "intensity" &&
+              formData.group_by?.value != "sample" && (
                 <>
-                  <label htmlFor="aggregation-method">
+                  <label htmlFor="aggregation_method">
                     Aggregation Method for Intensities
                   </label>
                   <Select
-                    inputId="aggregation-method"
+                    inputId="aggregation_method"
                     options={[
                       { value: "median", label: "Median" },
                       { value: "mean", label: "Mean" },
                       { value: "sum", label: "Sum" },
                     ]}
+                    value={formData.aggregation_method}
                     onChange={(selectedOption) => {
                       setFormData((prev) => ({
                         ...prev,
-                        aggregation_method: selectedOption?.value,
+                        aggregation_method: selectedOption ?? undefined,
                       }));
                     }}
                   />
@@ -219,7 +259,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
           </>
         )}
 
-        {formData.plot_type === "barplot" && (
+        {formData.plot_type?.value === "barplot" && (
           <>
             <label htmlFor="group_by">Group By</label>
             <Select
@@ -230,29 +270,31 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
                 { value: "group", label: "Groups" },
                 { value: "batch", label: "Batches" },
               ]}
+              value={formData.group_by}
               onChange={(selectedOption) => {
                 setFormData((prev) => ({
                   ...prev,
                   reference_group: undefined,
-                  group_by: selectedOption?.value,
+                  group_by: selectedOption ?? undefined,
                 }));
               }}
             />
 
-            <label htmlFor="aggregation-method">
+            <label htmlFor="aggregation_method">
               Aggregation Method for Intensities
             </label>
             <Select
-              inputId="aggregation-method"
+              inputId="aggregation_method"
               options={[
                 { value: "median", label: "Median" },
                 { value: "mean", label: "Mean" },
                 { value: "sum", label: "Sum" },
               ]}
+              value={formData.aggregation_method}
               onChange={(selectedOption) => {
                 setFormData((prev) => ({
                   ...prev,
-                  aggregation_method: selectedOption?.value,
+                  aggregation_method: selectedOption ?? undefined,
                 }));
               }}
             />
@@ -265,34 +307,28 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
                 { value: "intensity", label: "Intensity" },
                 { value: "count", label: "Count" },
               ]}
+              value={formData.metric}
               onChange={(selectedOption) => {
                 setFormData((prev) => ({
                   ...prev,
-                  metric: selectedOption?.value,
+                  metric: selectedOption ?? undefined,
                 }));
               }}
             />
 
-            {(formData?.metric == "intensity" ||
-              formData?.metric == "count") && (
+            {(formData.metric?.value == "intensity" ||
+              formData.metric?.value == "count") && (
               <>
                 <label htmlFor="reference_group">Reference Group</label>
                 <Select
                   inputId="reference_group"
                   options={getReferenceGroupOptions()}
                   isClearable
-                  value={
-                    formData.reference_group
-                      ? {
-                          value: formData.reference_group,
-                          label: formData.reference_group,
-                        }
-                      : null
-                  }
+                  value={formData.reference_group}
                   onChange={(selectedOption) => {
                     setFormData((prev) => ({
                       ...prev,
-                      reference_group: selectedOption?.value,
+                      reference_group: selectedOption ?? undefined,
                     }));
                   }}
                 />
@@ -301,21 +337,20 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
 
             <h2 className="text-xl font-semibold mb-4">Select Data</h2>
 
-            <label htmlFor="protein-select">Proteins</label>
+            <label htmlFor="proteins">Proteins</label>
             <AsyncSelect
-              inputId="protein-select"
+              inputId="proteins"
               cacheOptions
               loadOptions={loadProteinOptions}
+              value={formData.proteins}
               closeMenuOnSelect={false}
               defaultOptions
               isMulti
               onChange={(selectedOptions) => {
-                const proteins = selectedOptions
-                  ? (selectedOptions as OptionType[]).map(
-                      (option) => option.value,
-                    )
-                  : [];
-                setFormData((prev) => ({ ...prev, proteins: proteins }));
+                setFormData((prev) => ({
+                  ...prev,
+                  proteins: selectedOptions as Option[],
+                }));
               }}
             />
 
@@ -323,13 +358,11 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             <Select
               inputId="samples"
               options={samples}
+              value={formData.samples}
               closeMenuOnSelect={false}
               isMulti
               onChange={(selectedOptions) => {
-                const samples = selectedOptions
-                  ? selectedOptions.map((option) => option.value)
-                  : [];
-                setFormData((prev) => ({ ...prev, samples: samples }));
+                setFormData((prev) => ({ ...prev, samples: selectedOptions }));
               }}
             />
 
@@ -337,13 +370,11 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             <Select
               inputId="groups"
               options={groups}
+              value={formData.groups}
               closeMenuOnSelect={false}
               isMulti
               onChange={(selectedOptions) => {
-                const groups = selectedOptions
-                  ? selectedOptions.map((option) => option.value)
-                  : [];
-                setFormData((prev) => ({ ...prev, groups: groups }));
+                setFormData((prev) => ({ ...prev, groups: selectedOptions }));
               }}
             />
 
@@ -351,13 +382,11 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             <Select
               inputId="batches"
               options={batches}
+              value={formData.batches}
               closeMenuOnSelect={false}
               isMulti
               onChange={(selectedOptions) => {
-                const batches = selectedOptions
-                  ? selectedOptions.map((option) => option.value)
-                  : [];
-                setFormData((prev) => ({ ...prev, batches: batches }));
+                setFormData((prev) => ({ ...prev, batches: selectedOptions }));
               }}
             />
           </>
@@ -365,12 +394,13 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
 
         <h2 className="text-xl font-semibold mb-4">Plot Modifications</h2>
 
-        {formData.plot_type === "heatmap" && (
+        {formData.plot_type?.value === "heatmap" && (
           <>
             <FormControlLabel
               control={
                 <Checkbox
                   id="logarithmizeData"
+                  checked={style.logarithmizeData}
                   onChange={(e) => {
                     setStyle((prev) => ({
                       ...prev,
@@ -385,6 +415,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               control={
                 <Checkbox
                   id="logScale"
+                  checked={style.useLogScale}
                   onChange={(e) => {
                     setStyle((prev) => ({
                       ...prev,
@@ -398,12 +429,13 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
           </>
         )}
 
-        {formData.plot_type === "barplot" && (
+        {formData.plot_type?.value === "barplot" && (
           <>
             <FormControlLabel
               control={
                 <Checkbox
                   id="logarithmizeDataPos"
+                  checked={style.logarithmizeDataPos}
                   onChange={(e) => {
                     setStyle((prev) => ({
                       ...prev,
@@ -419,6 +451,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               control={
                 <Checkbox
                   id="logarithmizeDataNeg"
+                  checked={style.logarithmizeDataNeg}
                   onChange={(e) => {
                     setStyle((prev) => ({
                       ...prev,
@@ -434,6 +467,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               control={
                 <Checkbox
                   id="useLogScaleYPos"
+                  checked={style.useLogScaleYPos}
                   onChange={(e) => {
                     setStyle((prev) => ({
                       ...prev,
@@ -449,6 +483,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               control={
                 <Checkbox
                   id="useLogScaleYNeg"
+                  checked={style.useLogScaleYNeg}
                   onChange={(e) => {
                     setStyle((prev) => ({
                       ...prev,

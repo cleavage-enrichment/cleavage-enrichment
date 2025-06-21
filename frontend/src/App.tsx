@@ -18,7 +18,16 @@ type Data = {
 
 function App() {
   const [Data, setData] = React.useState<Data | null>();
-  const [plotStyle, setPlotStyle] = React.useState<PlotStyle>();
+  // Load plotStyle from localStorage on first render
+  const [plotStyle, setPlotStyle] = React.useState<PlotStyle>(() => {
+    const saved = localStorage.getItem("plotStyle");
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  // Save plotStyle to localStorage whenever it changes
+  React.useEffect(() => {
+    localStorage.setItem("plotStyle", JSON.stringify(plotStyle));
+  }, [plotStyle]);
 
   const handleFormChange = (formData: FormData) => {
     if (formData) {
@@ -32,7 +41,6 @@ function App() {
         .then((res) => res.json())
         .then((data) => {
           setData(data["data"] || []);
-          console.log("Plot data received:", data);
         });
     } else {
       setData(null);

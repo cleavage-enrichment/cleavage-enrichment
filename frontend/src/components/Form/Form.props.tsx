@@ -1,13 +1,22 @@
+export type Option = {
+  value: string;
+  label: string;
+};
+
+export type Options = readonly Option[];
+
 export type FormData = {
-  plot_type?: string;
-  show_data_by?: string;
-  proteins?: string[];
-  groups?: string[];
-  samples?: string[];
-  grouping_method?: string;
-  metric?: string;
-  group_by?: string;
-  reference_group?: string;
+  plot_type?: Option;
+  show_data_by?: Option;
+  proteins?: Options;
+  groups?: Options;
+  samples?: Options;
+  grouping_method?: Option;
+  metric?: Option;
+  group_by?: Option;
+  reference_group?: Option;
+  aggregation_method?: Option;
+  batches?: Options;
 };
 
 export type PlotStyle = {

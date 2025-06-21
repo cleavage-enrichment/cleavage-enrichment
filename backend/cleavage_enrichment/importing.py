@@ -322,7 +322,7 @@ class CleavageEnrichment:
         INTENSITY = "intensity"
         COUNT = "count"
     
-    def heatmap_data(self, protein = None, aggregation_method: AggregationMethod = None, metric:Metric = None, group_by: GroupBy = None, samples: list[str] = []) -> dict:
+    def heatmap_data(self, proteins = None, aggregation_method: AggregationMethod = None, metric:Metric = None, group_by: GroupBy = None, samples: list[str] = []) -> dict:
         """
         Output:
         {
@@ -348,9 +348,13 @@ class CleavageEnrichment:
         output["plot_data"]["samples"] = []
         output["plot_data"]["name"] = f"Heatmap"
 
-        if not protein:
+        if not proteins:
             logger.error("No protein specified for heatmap data.")
             return output
+        if len(proteins) > 1:
+            logger.error("Multiple proteins specified for heatmap data. Please select only one protein.")
+            return output
+        protein = proteins[0]
    
         output["plot_data"]["name"] = f"Heatmap for {protein}"
 

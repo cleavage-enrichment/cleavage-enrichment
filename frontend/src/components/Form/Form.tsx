@@ -129,7 +129,6 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             { value: "barplot", label: "Barplot" },
           ]}
           value={formData.plot_type}
-          defaultValue={{ value: "heatmap", label: "Heatmap" }}
           onChange={(selectedOption) => {
             setFormData((prev) => ({
               plot_type: selectedOption ?? undefined,

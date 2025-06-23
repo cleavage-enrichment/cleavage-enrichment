@@ -105,7 +105,6 @@ class CleavageEnrichment:
 
         return pd.DataFrame(records)
     
-
     def load_peptides(self) -> None:
         if self.peptidedata is None:
             self.peptidedata = self.read_csv(settings.STATICFILES_BASE / "PeptideImport.csv")
@@ -113,6 +112,9 @@ class CleavageEnrichment:
     def load_metadata(self) -> None:
         if self.metadata is None:
             self.metadata = self.read_csv(settings.STATICFILES_BASE / "meta.csv")
+            if Meta.SAMPLE not in self.metadata.columns:
+                logger.error(f"Metadata file does not contain the required column '{Meta.SAMPLE}'. Please check the metadata file.")
+                self.metadata = None
 
     def load_fasta(self) -> None:
         if self.fastadata is None:
@@ -165,31 +167,12 @@ class CleavageEnrichment:
         return filtered.head(count).tolist()
 
     @metadata_needed
-    def getGroups(self):
-        """
-        Get unique groups from the metadata based on a filter string.
-        """
-
-        unique_groups = self.metadata[Meta.GROUP].dropna().unique()
-        return unique_groups.tolist()
-    
-    @peptides_needed
-    def getSamples(self):
-        """
-        Get unique samples from the metadata based on a filter string.
-        """
-
-        unique_samples = self.peptidedata["Sample"].dropna().unique()
-        return unique_samples.tolist()
-
-    @metadata_needed
-    def getBatches(self):
-        """
-        Get unique batches from the metadata based on a filter string.
-        """
-
-        unique_batches = self.metadata[Meta.BATCH].dropna().unique()
-        return unique_batches.tolist()
+    def get_metadata_groups(self) -> dict[str, list[str]]:
+        groups = {}
+        for column in self.metadata.columns:
+            unique_values = self.metadata[column].dropna().unique()
+            groups[column] = unique_values.tolist()
+        return groups
 
     @fasta_needed
     def find_peptide_position(self, protein_sequence: str, peptide_sequence: str) -> tuple[int, int]:
@@ -251,7 +234,13 @@ class CleavageEnrichment:
     @peptides_needed
     @metadata_needed
     @fasta_needed
-    def protein_plot_data(self, proteins:list[str], aggregation_method:AggregationMethod, group_by:GroupBy = GroupBy.PROTEIN, samples:list[str] = None, groups:list[str] = None, batches:list[str] = None) -> list[dict]:
+    def protein_plot_data(
+        self,
+        proteins:list[str],
+        aggregation_method:AggregationMethod,
+        group_by:GroupBy = GroupBy.PROTEIN,
+        metadatafilter: dict[str, list] = {}
+    ) -> list[dict]:
         """
         Get plot data for a specific protein.
 
@@ -269,62 +258,41 @@ class CleavageEnrichment:
         peptides : pd.DataFrame = self.peptidedata[self.peptidedata["Protein ID"].isin(proteins)]
 
         metadata: pd.DataFrame = self.metadata
-        if samples:
-            metadata = metadata[self.metadata[Meta.SAMPLE].isin(samples)]
-        if groups:
-            metadata = metadata[self.metadata[Meta.GROUP].isin(groups)]
-        if batches:
-            metadata = metadata[self.metadata[Meta.BATCH].isin(batches)]
+
+        usesFilters = False
+        for key, values in metadatafilter.items():
+            print(f"Filtering metadata by {key} with values {values}")
+            if key in metadata.columns:
+                if values:
+                    metadata = metadata[metadata[key].isin(values)]
+                    usesFilters = True
+            else:
+                logger.warning(f"Metadata column '{key}' not found. Skipping filter for this column.")
+
+        peptides = pd.merge(metadata, peptides, on=Meta.SAMPLE, how='left')
 
         output = []
 
-        if group_by == GroupBy.PROTEIN:           
-            for protein_id in proteins:
-                protein_sequence = self.getProteinSequence(protein_id)
+        for protein_id in proteins:
+            protein_sequence = self.getProteinSequence(protein_id)
 
-                sample_peptides = peptides[peptides[PeptideDF.ID] == protein_id]
-                if sample_peptides.empty:
-                    logger.warning(f"No peptides found for protein {protein_id} in metadata.")
-                    continue
+            sample_peptides = peptides[peptides[PeptideDF.ID] == protein_id]
+            if sample_peptides.empty:
+                logger.warning(f"No peptides found for protein {protein_id} in metadata.")
+                continue
 
-                count, intensity = self.calculate_count_sum(protein_sequence, sample_peptides, aggregation_method)
+            group_by = group_by if group_by != GroupBy.PROTEIN else PeptideDF.ID
+            grouped = sample_peptides.groupby(group_by)
+
+            for group_name, group_df in grouped:
+                count, intensity = self.calculate_count_sum(protein_sequence,peptides=group_df,aggregation_method=aggregation_method)
+
                 output.append({
-                    OutpuKeys.LABEL: f"{protein_id}",
+                    OutpuKeys.LABEL: f"{group_name}",
                     OutpuKeys.COUNT: count,
                     OutpuKeys.INTENSITY: intensity,
-                })
-        
-        if len(proteins) > 1:
-            logger.warning("Multiple proteins specified, grouping by sample, batch or group is not supported for multiple proteins.")
-            return output
-        
-        grouping_key = None
-        if group_by == GroupBy.SAMPLE:
-            grouping_key = Meta.SAMPLE
-        elif group_by == GroupBy.BATCH:
-            grouping_key = Meta.BATCH
-        elif group_by == GroupBy.GROUP:
-            grouping_key = Meta.GROUP
-        else:
-            logger.error(f"Unknown group_by method: {group_by}")
-            return output
-
-        merged = pd.merge(metadata, peptides, on=Meta.SAMPLE, how='left')
-        
-        grouped = merged.groupby(grouping_key)
-        protein_sequence = self.getProteinSequence(proteins[0])
-        
-        for group_name, group_df in grouped:
-            count, intensity = self.calculate_count_sum(protein_sequence,peptides=group_df,aggregation_method=aggregation_method)
-
-            output.append({
-                OutpuKeys.LABEL: f"{group_name}",
-                OutpuKeys.COUNT: count,
-                OutpuKeys.INTENSITY: intensity,
             })
-
         return output
-
 
     class PlotType:
         HEATMAP = "heatmap"
@@ -335,7 +303,7 @@ class CleavageEnrichment:
         INTENSITY = "intensity"
         COUNT = "count"
     
-    def heatmap_data(self, proteins = None, aggregation_method: AggregationMethod = None, metric:Metric = None, group_by: GroupBy = None, samples: list[str] = [], batches: list[str] = [], groups: list[str] = []) -> dict:
+    def heatmap_data(self, proteins = None, aggregation_method: AggregationMethod = None, metric:Metric = None, group_by: GroupBy = None, metadatafilter: dict[str, list] = {}) -> dict:
         """
         Output:
         {
@@ -393,17 +361,9 @@ class CleavageEnrichment:
             logger.error("No group_by method specified for heatmap data.")
             return output
         
-        if group_by == GroupBy.SAMPLE:
-            output["plot_data"]["ylabel"] = "Samples"
-        elif group_by == GroupBy.GROUP:
-            output["plot_data"]["ylabel"] = "Groups"
-        elif group_by == GroupBy.BATCH:
-            output["plot_data"]["ylabel"] = "Batches"
-        else:
-            logger.error(f"Unknown group_by method: {group_by}")
-            return output
+        output["plot_data"]["ylabel"] = group_by
 
-        peptide_data: list[dict] = self.protein_plot_data([protein], aggregation_method=aggregation_method, group_by=group_by, samples=samples, groups=groups, batches=batches)
+        peptide_data: list[dict] = self.protein_plot_data([protein], aggregation_method=aggregation_method, group_by=group_by, metadatafilter=metadatafilter)
 
         for data in peptide_data:
             label = data[OutpuKeys.LABEL]
@@ -430,7 +390,7 @@ class CleavageEnrichment:
         return output
     
 
-    def barplot_data(self, group_by: GroupBy = None, proteins: list[str] = None, aggregation_method: AggregationMethod = None, metric: Metric = None, reference_group: str = None, samples: list[str] = None, groups: list[str] = None, batches: list[str] = None) -> dict:
+    def barplot_data(self, group_by: GroupBy = None, proteins: list[str] = None, aggregation_method: AggregationMethod = None, metric: Metric = None, reference_group: str = None, metadatafilter: dict[str, list[str]] = {}) -> dict:
         """
         Get barplot data for a specific protein.
 
@@ -477,7 +437,7 @@ class CleavageEnrichment:
             logger.error("No metric specified for barplot data.")
             return output
 
-        peptide_data: list[dict] = self.protein_plot_data(proteins, aggregation_method=aggregation_method, group_by=group_by, samples=samples, groups=groups, batches=batches)
+        peptide_data: list[dict] = self.protein_plot_data(proteins, aggregation_method=aggregation_method, group_by=group_by, metadatafilter=metadatafilter)
 
         isReferenceMode = (reference_group is not None) and (metric != self.Metric.INTENSITY_COUNT)
 

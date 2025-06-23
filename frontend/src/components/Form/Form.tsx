@@ -26,7 +26,13 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
   function flattenFormData(formData: FormData) {
     const result: Record<string, any> = {};
     for (const [key, value] of Object.entries(formData)) {
-      if (Array.isArray(value)) {
+      if (key == "metadatafilter") {
+        // Flatten metadatafilter object
+        result[key] = {};
+        for (const [subKey, subValue] of Object.entries(value)) {
+          result[key][subKey] = subValue.map((v) => v.value);
+        }
+      } else if (Array.isArray(value)) {
         // Array of Option objects
         result[key] = value.map((v) => v.value);
       } else if (value && typeof value === "object" && "value" in value) {
@@ -36,30 +42,28 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
         result[key] = value;
       }
     }
+    console.log("Flattened formData:", result);
     return result;
   }
 
   // Save formData to localStorage whenever it changes
-  React.useEffect(() => {
+  useEffect(() => {
     localStorage.setItem("formData", JSON.stringify(formData));
     onChange(flattenFormData(formData));
+    console.log("Form data changed:", flattenFormData(formData));
   }, [formData]);
 
   // Save style to localStorage whenever it changes
-  React.useEffect(() => {
+  useEffect(() => {
     localStorage.setItem("formStyle", JSON.stringify(style));
     if (onStyleChange) {
       onStyleChange(style);
     }
   }, [style]);
 
-  const [samples, setSamples] = React.useState<Options>([]);
-  const [groups, setGroups] = React.useState<Options>([]);
-  const [batches, setBatches] = React.useState<Options>([]);
-
-  useEffect(() => {
-    onChange(formData);
-  }, [formData]);
+  const [metadataGroups, setMetadataGroups] = React.useState<
+    Record<string, string[]>
+  >({});
 
   useEffect(() => {
     if (onStyleChange) {
@@ -79,46 +83,16 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
       });
   };
 
-  function loadGroupOptions() {
-    fetch(`/api/getgroups`)
+  function loadMetadataGroups() {
+    fetch(`/api/getmetadatagroups`)
       .then((res) => res.json())
       .then((data) => {
-        const options = (data.groups || []).map((p) => ({
-          value: p,
-          label: p,
-        }));
-        setGroups(options);
-      });
-  }
-
-  function loadSampleOptions() {
-    fetch(`/api/getsamples`)
-      .then((res) => res.json())
-      .then((data) => {
-        const options = (data.samples || []).map((p) => ({
-          value: p,
-          label: p,
-        }));
-        setSamples(options);
-      });
-  }
-
-  function loadBatchOptions() {
-    fetch(`/api/getbatches`)
-      .then((res) => res.json())
-      .then((data) => {
-        const options = (data.batches || []).map((p) => ({
-          value: p,
-          label: p,
-        }));
-        setBatches(options);
+        setMetadataGroups(data.metadata_groups);
       });
   }
 
   useEffect(() => {
-    loadGroupOptions();
-    loadSampleOptions();
-    loadBatchOptions();
+    loadMetadataGroups();
   }, []);
 
   // for reference_group field
@@ -126,14 +100,15 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
     switch (formData.group_by?.value) {
       case "protein":
         return formData.proteins;
-      case "sample":
-        return samples;
-      case "group":
-        return groups;
-      case "batch":
-        return batches;
       default:
-        return [];
+        return (
+          formData.group_by?.value
+            ? metadataGroups[formData.group_by?.value]
+            : []
+        ).map((o) => ({
+          value: o,
+          label: o,
+        }));
     }
   }
 
@@ -167,11 +142,10 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             <label htmlFor="group_by">Group by</label>
             <Select
               inputId="group_by"
-              options={[
-                { value: "sample", label: "Samples" },
-                { value: "group", label: "Groups" },
-                { value: "batch", label: "Batches" },
-              ]}
+              options={Object.keys(metadataGroups).map((key) => ({
+                value: key,
+                label: key,
+              }))}
               value={formData.group_by}
               onChange={(selectedOption) => {
                 setFormData((prev) => ({
@@ -238,60 +212,55 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               }}
             />
 
-            <label htmlFor="samples">Samples</label>
-            <Select
-              inputId="samples"
-              options={samples}
-              value={formData.samples}
-              closeMenuOnSelect={false}
-              isMulti
-              onChange={(selectedOptions) => {
-                setFormData((prev) => ({ ...prev, samples: selectedOptions }));
-              }}
-            />
-
-            <label htmlFor="groups">Groups</label>
-            <Select
-              inputId="groups"
-              options={groups}
-              value={formData.groups}
-              closeMenuOnSelect={false}
-              isMulti
-              onChange={(selectedOptions) => {
-                setFormData((prev) => ({ ...prev, groups: selectedOptions }));
-              }}
-            />
-
-            <label htmlFor="batches">Batches</label>
-            <Select
-              inputId="batches"
-              options={batches}
-              value={formData.batches}
-              closeMenuOnSelect={false}
-              isMulti
-              onChange={(selectedOptions) => {
-                setFormData((prev) => ({ ...prev, batches: selectedOptions }));
-              }}
-            />
+            {Object.entries(metadataGroups).map(([key, options]) => (
+              <React.Fragment key={key}>
+                <label htmlFor={key}>{key}</label>
+                <Select
+                  inputId={key}
+                  options={options.map((o) => ({
+                    value: o,
+                    label: o,
+                  }))}
+                  value={formData.metadatafilter?.[key] ?? []}
+                  closeMenuOnSelect={false}
+                  isMulti
+                  onChange={(selectedOptions) => {
+                    if (formData.metadatafilter === undefined) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        metadatafilter: {},
+                      }));
+                    }
+                    setFormData((prev) => ({
+                      ...prev,
+                      metadatafilter: {
+                        ...prev.metadatafilter,
+                        [key]: selectedOptions,
+                      },
+                    }));
+                  }}
+                />
+              </React.Fragment>
+            ))}
           </>
         )}
 
         {formData.plot_type?.value === "barplot" && (
           <>
-            <label htmlFor="group_by">Group By</label>
+            {/* Both */}
+            <label htmlFor="group_by">Group by</label>
             <Select
               inputId="group_by"
-              options={[
-                { value: "protein", label: "Proteins" },
-                { value: "sample", label: "Samples" },
-                { value: "group", label: "Groups" },
-                { value: "batch", label: "Batches" },
-              ]}
+              options={Object.keys(metadataGroups)
+                .map((key) => ({
+                  value: key,
+                  label: key,
+                }))
+                .concat([{ value: "protein", label: "Protein" }])}
               value={formData.group_by}
               onChange={(selectedOption) => {
                 setFormData((prev) => ({
                   ...prev,
-                  reference_group: undefined,
                   group_by: selectedOption ?? undefined,
                 }));
               }}
@@ -371,41 +340,36 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               }}
             />
 
-            <label htmlFor="samples">Samples</label>
-            <Select
-              inputId="samples"
-              options={samples}
-              value={formData.samples}
-              closeMenuOnSelect={false}
-              isMulti
-              onChange={(selectedOptions) => {
-                setFormData((prev) => ({ ...prev, samples: selectedOptions }));
-              }}
-            />
-
-            <label htmlFor="groups">Groups</label>
-            <Select
-              inputId="groups"
-              options={groups}
-              value={formData.groups}
-              closeMenuOnSelect={false}
-              isMulti
-              onChange={(selectedOptions) => {
-                setFormData((prev) => ({ ...prev, groups: selectedOptions }));
-              }}
-            />
-
-            <label htmlFor="batches">Batches</label>
-            <Select
-              inputId="batches"
-              options={batches}
-              value={formData.batches}
-              closeMenuOnSelect={false}
-              isMulti
-              onChange={(selectedOptions) => {
-                setFormData((prev) => ({ ...prev, batches: selectedOptions }));
-              }}
-            />
+            {Object.entries(metadataGroups).map(([key, options]) => (
+              <React.Fragment key={key}>
+                <label htmlFor={key}>{key}</label>
+                <Select
+                  inputId={key}
+                  options={options.map((o) => ({
+                    value: o,
+                    label: o,
+                  }))}
+                  value={formData.metadatafilter?.[key] ?? []}
+                  closeMenuOnSelect={false}
+                  isMulti
+                  onChange={(selectedOptions) => {
+                    if (formData.metadatafilter === undefined) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        metadatafilter: {},
+                      }));
+                    }
+                    setFormData((prev) => ({
+                      ...prev,
+                      metadatafilter: {
+                        ...prev.metadatafilter,
+                        [key]: selectedOptions,
+                      },
+                    }));
+                  }}
+                />
+              </React.Fragment>
+            ))}
           </>
         )}
 
@@ -414,6 +378,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
         {formData.plot_type?.value === "heatmap" && (
           <>
             <FormControlLabel
+              className="w-full"
               control={
                 <Checkbox
                   id="logarithmizeData"
@@ -429,6 +394,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               label="log data"
             />
             <FormControlLabel
+              className="w-full"
               control={
                 <Checkbox
                   id="logScale"
@@ -449,6 +415,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
         {formData.plot_type?.value === "barplot" && (
           <>
             <FormControlLabel
+              className="w-full"
               control={
                 <Checkbox
                   id="logarithmizeDataPos"
@@ -465,6 +432,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             />
 
             <FormControlLabel
+              className="w-full"
               control={
                 <Checkbox
                   id="logarithmizeDataNeg"
@@ -481,6 +449,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             />
 
             <FormControlLabel
+              className="w-full"
               control={
                 <Checkbox
                   id="useLogScaleYPos"
@@ -497,6 +466,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             />
 
             <FormControlLabel
+              className="w-full"
               control={
                 <Checkbox
                   id="useLogScaleYNeg"

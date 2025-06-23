@@ -27,33 +27,14 @@ def getProteins(request):
         
     return JsonResponse({"proteins": proteins})
 
-def getGroups(request):
+def getMetadataGroups(request):
     """
-    Get unique groups from the metadata.
-    """
-    
-    groups = cleavage_enrichment.getGroups()
-    
-    return JsonResponse({"groups": groups})
-
-def getSamples(request):
-    """
-    Get unique samples from the metadata.
+    Get metadata columns from the dataset.
     """
     
-    samples = cleavage_enrichment.getSamples()
+    metadata_groups = cleavage_enrichment.get_metadata_groups()
     
-    return JsonResponse({"samples": samples})
-
-def getBatches(request):
-    """
-    Get unique batches from the metadata.
-    """
-    
-    batches = cleavage_enrichment.getBatches()
-    
-    return JsonResponse({"batches": batches})
-
+    return JsonResponse({"metadata_groups": metadata_groups})
 
 @csrf_exempt
 def getPlotData(request):

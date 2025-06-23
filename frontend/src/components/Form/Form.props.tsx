@@ -9,14 +9,12 @@ export type FormData = {
   plot_type?: Option;
   show_data_by?: Option;
   proteins?: Options;
-  groups?: Options;
-  samples?: Options;
   grouping_method?: Option;
   metric?: Option;
   group_by?: Option;
   reference_group?: Option;
   aggregation_method?: Option;
-  batches?: Options;
+  metadatafilter?: Record<string, Options>;
 };
 
 export type PlotStyle = {

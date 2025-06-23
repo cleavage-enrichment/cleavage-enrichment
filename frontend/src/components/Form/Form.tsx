@@ -197,6 +197,30 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               }}
             />
 
+            {formData.metric?.value === "intensity" &&
+              formData.group_by?.value != "sample" && (
+                <>
+                  <label htmlFor="aggregation_method">
+                    Aggregation Method for Intensities
+                  </label>
+                  <Select
+                    inputId="aggregation_method"
+                    options={[
+                      { value: "median", label: "Median" },
+                      { value: "mean", label: "Mean" },
+                      { value: "sum", label: "Sum" },
+                    ]}
+                    value={formData.aggregation_method}
+                    onChange={(selectedOption) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        aggregation_method: selectedOption ?? undefined,
+                      }));
+                    }}
+                  />
+                </>
+              )}
+
             <h2 className="text-xl font-semibold mb-4">Select Data</h2>
 
             <label htmlFor="proteins">Protein</label>
@@ -249,30 +273,6 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
                 setFormData((prev) => ({ ...prev, batches: selectedOptions }));
               }}
             />
-
-            {formData.metric?.value === "intensity" &&
-              formData.group_by?.value != "sample" && (
-                <>
-                  <label htmlFor="aggregation_method">
-                    Aggregation Method for Intensities
-                  </label>
-                  <Select
-                    inputId="aggregation_method"
-                    options={[
-                      { value: "median", label: "Median" },
-                      { value: "mean", label: "Mean" },
-                      { value: "sum", label: "Sum" },
-                    ]}
-                    value={formData.aggregation_method}
-                    onChange={(selectedOption) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        aggregation_method: selectedOption ?? undefined,
-                      }));
-                    }}
-                  />
-                </>
-              )}
           </>
         )}
 

@@ -3,9 +3,9 @@ from functools import wraps
 import math
 import os
 from typing import Callable, Literal
+from pyteomics import fasta
 
 import pandas as pd
-import fastapy
 import logging
 logger = logging.getLogger(__name__)
 
@@ -84,14 +84,27 @@ class CleavageEnrichment:
             raise FileNotFoundError(f"Data file not found at {file_path}")
 
         records = []
-        for record in fastapy.parse(file_path):
-            records.append({
-                'id': record.id,
-                'description': record.desc,
-                'sequence': record.seq
-            })
+
+        no_id = False
+
+        with fasta.read(str(file_path)) as entries:
+            for description, sequence in entries:
+                parsed = fasta.parse(description)
+                protein_id = parsed.get('id', None)
+
+                if protein_id is None:
+                    no_id = True
+                
+                records.append({
+                    FastaDF.ID: protein_id,
+                    FastaDF.SEQUENCE: sequence
+                })
+
+        if no_id:
+            logger.warning(f"Some entries in the FASTA file {file_path} do not have an ID. Please ensure all entries have a unique ID.")
 
         return pd.DataFrame(records)
+    
 
     def load_peptides(self) -> None:
         if self.peptidedata is None:
@@ -227,7 +240,7 @@ class CleavageEnrichment:
         """
         Get the amino acid sequence of a protein by its ID.
         """
-        fasatadata = self.fastadata[self.fastadata[FastaDF.ID].str.contains(protein_id)]
+        fasatadata = self.fastadata[self.fastadata[FastaDF.ID] == protein_id]
         if fasatadata.empty:
             raise ValueError(f"Protein ID {protein_id} not found in FASTA data.")
         if len(fasatadata) > 1:

@@ -96,7 +96,7 @@ export const Heatmap: React.FC<HeatmapProps> = ({
       customdata: samples.map((s) => s.data.map((v) => formatValue(v))),
       type: "heatmap",
       hovertemplate: `${heatmapdata.metric}: %{customdata}<extra>Position: %{x}</extra>`,
-      colorscale: colors,
+      colorscale: "RdBu",
       colorbar: {
         title: {
           text: heatmapdata.metric,

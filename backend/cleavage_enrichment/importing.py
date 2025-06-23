@@ -322,7 +322,7 @@ class CleavageEnrichment:
         INTENSITY = "intensity"
         COUNT = "count"
     
-    def heatmap_data(self, proteins = None, aggregation_method: AggregationMethod = None, metric:Metric = None, group_by: GroupBy = None, samples: list[str] = []) -> dict:
+    def heatmap_data(self, proteins = None, aggregation_method: AggregationMethod = None, metric:Metric = None, group_by: GroupBy = None, samples: list[str] = [], batches: list[str] = [], groups: list[str] = []) -> dict:
         """
         Output:
         {
@@ -390,7 +390,7 @@ class CleavageEnrichment:
             logger.error(f"Unknown group_by method: {group_by}")
             return output
 
-        peptide_data: list[dict] = self.protein_plot_data([protein], aggregation_method=aggregation_method, group_by=group_by, samples=samples)
+        peptide_data: list[dict] = self.protein_plot_data([protein], aggregation_method=aggregation_method, group_by=group_by, samples=samples, groups=groups, batches=batches)
 
         for data in peptide_data:
             label = data[OutpuKeys.LABEL]

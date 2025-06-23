@@ -2,8 +2,6 @@ import { FormProps, FormData, Options, Option } from "./Form.props";
 import AsyncSelect from "react-select/async";
 import Select from "react-select";
 import React, { useEffect } from "react";
-// import { FileUpload } from "./components/FileUpload/FileUpload";
-// import Papa from "papaparse";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 
@@ -166,21 +164,6 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
 
         {formData.plot_type?.value === "heatmap" && (
           <>
-            <label htmlFor="proteins">Protein</label>
-            <AsyncSelect
-              inputId="proteins"
-              cacheOptions
-              loadOptions={loadProteinOptions}
-              value={formData.proteins ? formData.proteins[0] : undefined}
-              defaultOptions
-              onChange={(selectedOption) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  proteins: selectedOption ? [selectedOption] : undefined,
-                }));
-              }}
-            />
-
             <label htmlFor="group_by">Group by</label>
             <Select
               inputId="group_by"
@@ -198,25 +181,6 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               }}
             />
 
-            {formData.group_by?.value === "sample" && (
-              <>
-                <label htmlFor="samples">Select Samples</label>
-                <Select
-                  inputId="samples"
-                  options={samples}
-                  value={formData.samples}
-                  isMulti
-                  closeMenuOnSelect={false}
-                  onChange={(selectedOptions) => {
-                    setFormData((prev) => ({
-                      ...prev,
-                      samples: selectedOptions ?? [],
-                    }));
-                  }}
-                />
-              </>
-            )}
-
             <label htmlFor="metric">Displayed Metric</label>
             <Select
               inputId="metric"
@@ -230,6 +194,59 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
                   ...prev,
                   metric: selectedOption ?? undefined,
                 }));
+              }}
+            />
+
+            <h2 className="text-xl font-semibold mb-4">Select Data</h2>
+
+            <label htmlFor="proteins">Protein</label>
+            <AsyncSelect
+              inputId="proteins"
+              cacheOptions
+              loadOptions={loadProteinOptions}
+              value={formData.proteins ? formData.proteins[0] : undefined}
+              defaultOptions
+              onChange={(selectedOption) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  proteins: selectedOption ? [selectedOption] : undefined,
+                }));
+              }}
+            />
+
+            <label htmlFor="samples">Samples</label>
+            <Select
+              inputId="samples"
+              options={samples}
+              value={formData.samples}
+              closeMenuOnSelect={false}
+              isMulti
+              onChange={(selectedOptions) => {
+                setFormData((prev) => ({ ...prev, samples: selectedOptions }));
+              }}
+            />
+
+            <label htmlFor="groups">Groups</label>
+            <Select
+              inputId="groups"
+              options={groups}
+              value={formData.groups}
+              closeMenuOnSelect={false}
+              isMulti
+              onChange={(selectedOptions) => {
+                setFormData((prev) => ({ ...prev, groups: selectedOptions }));
+              }}
+            />
+
+            <label htmlFor="batches">Batches</label>
+            <Select
+              inputId="batches"
+              options={batches}
+              value={formData.batches}
+              closeMenuOnSelect={false}
+              isMulti
+              onChange={(selectedOptions) => {
+                setFormData((prev) => ({ ...prev, batches: selectedOptions }));
               }}
             />
 

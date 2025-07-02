@@ -120,40 +120,22 @@ class CleavageEnrichment:
         if self.fastadata is None:
             self.fastadata = self.read_fasta(settings.STATICFILES_BASE / "uniprot_sprot.fasta")
 
-    def peptides_needed(func: Callable):
+    def data_needed(func: Callable):
         """
-        Decorator to ensure proteins are loaded before executing the function.
+        Decorator to ensure data is loaded before executing the function.
         """
         @wraps(func)
         def wrapper(self, *args, **kwargs):
             if self.peptidedata is None:
                 self.load_peptides()
-            return func(self, *args, **kwargs)
-        return wrapper
-
-    def metadata_needed(func: Callable):
-        """
-        Decorator to ensure metadata is loaded before executing the function.
-        """
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
             if self.metadata is None:
                 self.load_metadata()
-            return func(self, *args, **kwargs)
-        return wrapper
-    
-    def fasta_needed(func: Callable):
-        """
-        Decorator to ensure FASTA data is loaded before executing the function.
-        """
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
             if self.fastadata is None:
                 self.load_fasta()
             return func(self, *args, **kwargs)
         return wrapper
 
-    @peptides_needed
+    @data_needed
     def getProteins(self, filter="", count=5):
         """
         Search for proteins in the dataset based on a filter string.
@@ -166,7 +148,7 @@ class CleavageEnrichment:
         filtered = unique_series[unique_series.str.contains(filter, case=False, na=False)]
         return filtered.head(count).tolist()
 
-    @metadata_needed
+    @data_needed
     def get_metadata_groups(self) -> dict[str, list[str]]:
         groups = {}
         for column in self.metadata.columns:
@@ -174,13 +156,14 @@ class CleavageEnrichment:
             groups[column] = unique_values.tolist()
         return groups
 
-    @fasta_needed
     def find_peptide_position(self, protein_sequence: str, peptide_sequence: str) -> tuple[int, int]:
         """
         Find the start and end positions of a peptide in a protein sequence.
         Returns a tuple (start, end) .
 
         start and end inclusive 1-based indexing.
+
+        when not found: start = 0 
         """
 
         start = protein_sequence.find(peptide_sequence)
@@ -219,6 +202,7 @@ class CleavageEnrichment:
 
         return count, intensity
 
+    @data_needed
     def getProteinSequence(self, protein_id: str) -> str:
         """
         Get the amino acid sequence of a protein by its ID.
@@ -231,9 +215,7 @@ class CleavageEnrichment:
             raise ValueError(f"Multiple entries found for Protein ID {protein_id} in FASTA data. Please ensure unique protein IDs. Entries: {ids.tolist()}")
         return fasatadata.iloc[0][FastaDF.SEQUENCE]
 
-    @peptides_needed
-    @metadata_needed
-    @fasta_needed
+    @data_needed
     def protein_plot_data(
         self,
         proteins:list[str],

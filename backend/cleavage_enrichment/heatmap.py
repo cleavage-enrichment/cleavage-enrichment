@@ -21,7 +21,7 @@ def scientific_notation(value, precision=1):
     value = significant_figures(value, precision+1)
     return f"{value:.{precision}e}"
 
-def calculate_ticks(data: list, tickcount=4, is_log_scale=True):
+def calculate_ticks(data: list, is_log_scale=True, tickcount=4):
     flat_z = np.array(data).flatten()
     min_val = 0
     max_val = np.max(flat_z, initial=0)
@@ -67,29 +67,28 @@ def create_heatmap_figure(
     ylabel = "",
     logarithmize_data = False,
     use_log_scale = True,
-):    
-    # Prepare data
-    if logarithmize_data:
-        samples = [
-            {**s, "data": [log(v) for v in s["data"]]}
-            for s in samples
-        ]
-
+):
     max_length = max(len(s["data"]) for s in samples) if samples else 0
     for s in samples:
         s["data"] = s["data"] + [0] * (max_length - len(s["data"]))
 
-    loged_data = [
-        {**s, "data": [log(v) for v in s["data"]]}
-        for s in samples
-    ]
+    df = pd.DataFrame(
+        [s["data"] for s in samples],
+        index=[s["label"] for s in samples]
+    )
 
-    z = [s["data"] for s in (loged_data if use_log_scale else samples)]
-    y = [s["label"] for s in samples]
+    if logarithmize_data:
+        df = df.map(log)
+
+    if use_log_scale:
+        loged_df = df.map(log)
+
+    z = loged_df.values if use_log_scale else df.values
+    y = df.index.tolist()
     x = list(range(1, max_length + 1))
-    customdata = [[scientific_notation(v,3) for v in s["data"]] for s in samples]
+    customdata = df.applymap(lambda x: scientific_notation(x,3)).values
     
-    tickvals, ticktext = calculate_ticks( [s["data"] for s in samples], 4, use_log_scale)
+    tickvals, ticktext = calculate_ticks(df.values, use_log_scale)
 
     heatmap = go.Heatmap(
         x=x,

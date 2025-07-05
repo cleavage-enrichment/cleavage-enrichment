@@ -101,7 +101,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
           formData.group_by?.value
             ? metadataGroups[formData.group_by?.value]
             : []
-        ).map((o) => ({
+        )?.map((o) => ({
           value: o,
           label: o,
         }));

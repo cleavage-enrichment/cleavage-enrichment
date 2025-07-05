@@ -4,6 +4,7 @@ import plotly.figure_factory as ff
 import plotly.io as pio
 import pandas as pd
 import numpy as np
+import plotly.express as px
 
 def log(x):
     return np.log10(x) if x > 0 else 0
@@ -60,6 +61,39 @@ def create_dendrogram(data_matrix: pd.DataFrame, orientation='right'):
 
     return fig, data_matrix
 
+def create_group_heatmap(groups):
+    #color assignment
+    unique_groups = groups.iloc[:,0].unique()
+    color_palette = px.colors.qualitative.Plotly
+
+    group_to_color = {
+        group: color_palette[i % len(color_palette)]
+        for i, group in enumerate(unique_groups)
+    }
+
+    # map group to value
+    group_to_val = {group: i for i, group in enumerate(unique_groups)}
+    val_to_color = {group_to_val[g]: group_to_color[g] for g in group_to_val}
+
+    # z-values and labeltext
+    group_vals = groups.map(lambda g: group_to_val[g])
+    group_text = groups.map(lambda g: f'{g}')
+
+    # group-heatmap
+    group_heatmap = go.Heatmap(
+        z=group_vals.values,
+        x=groups.columns,
+        y=list(np.arange(5, groups.shape[0]*10, 10)),
+        showscale=False,
+        colorscale=[[i / (len(val_to_color)-1), c] for i, c in enumerate(val_to_color.values())],
+        text=group_text.values,
+        hovertemplate="%{text}<extra></extra>",
+        xaxis='x3',
+        yaxis='y'
+    )
+
+    return group_heatmap
+
 def create_heatmap_figure(
     samples,
     metric = "",
@@ -67,6 +101,8 @@ def create_heatmap_figure(
     ylabel = "",
     logarithmize_data = False,
     use_log_scale = True,
+    create_dendrogram = True,
+    groups = None,
 ):
     max_length = max(len(s["data"]) for s in samples) if samples else 0
     for s in samples:
@@ -80,13 +116,25 @@ def create_heatmap_figure(
     if logarithmize_data:
         df = df.map(log)
 
+    if create_dendrogram:
+      # Create Dendrogram
+      fig = ff.create_dendrogram(df.values, orientation='right')
+      for i in range(len(fig['data'])):
+          fig['data'][i]['xaxis'] = 'x2'
+      
+      ## Reordering of rows
+      dendro_leaves = fig['layout']['yaxis']['ticktext']
+      dendro_leaves = list(map(int, dendro_leaves))
+      df = df.iloc[dendro_leaves,:]
+
     if use_log_scale:
         loged_df = df.map(log)
 
     z = loged_df.values if use_log_scale else df.values
-    y = df.index.tolist()
+    y = fig['layout']['yaxis']['tickvals'] if create_dendrogram else df.index.tolist()
     x = list(range(1, max_length + 1))
-    customdata = df.applymap(lambda x: scientific_notation(x,3)).values
+
+    customdata = df.map(lambda x: scientific_notation(x,3)).values
     
     tickvals, ticktext = calculate_ticks(df.values, use_log_scale)
 
@@ -98,22 +146,64 @@ def create_heatmap_figure(
         hovertemplate=f"{metric}: %{{customdata}}<extra>Position: %{{x}}</extra>",
         colorscale="bluered",
         colorbar=dict(
-            title=metric,
+            title = metric,
             tickmode = "array",
             tickvals = tickvals,
             ticktext = ticktext,
         ),
     )
 
-    fig = go.Figure(data=[heatmap])
+    if create_dendrogram:
+      # Add Heatmap Data to Figure
+      fig.add_trace(heatmap)
+
+      fig.update_layout(
+          xaxis=dict(
+            domain = [.15, 0.9 if groups is not None else 1.0],
+          ),
+          xaxis2=dict(
+            domain = [0, .15],
+            showticklabels = False,
+          ),
+          yaxis=dict(
+            anchor = "x2",
+            ticktext = df.index.tolist(),
+            ticks = "",
+            range = [0, df.shape[0]*10],
+          )
+      )
+    
+    else:
+      fig = go.Figure(data=[heatmap])
+      fig.update_layout(
+          xaxis=dict(
+            domain = [0, 0.9 if groups is not None else 1],
+          )
+      )
+    
+    if groups is not None:
+      fig.add_trace(create_group_heatmap(groups))
+      fig.update_layout(
+          xaxis3=dict(
+            domain = [.95, 1],
+          ),
+      )
+
+    
     fig.update_layout(
+        plot_bgcolor='rgba(255,255,255,255)',
+        paper_bgcolor='rgba(255,255,255,255)',
         title=name,
-        xaxis=dict(title="Amino acid position"),
-        yaxis=dict(title=ylabel),
+        xaxis=dict(
+          range = [0.5, max_length+0.5],
+          title = "Amino acid position",
+          ticks = "",
+        ),
+        yaxis={'title': ylabel},
+        width=800,
         height=max(400, 150 + len(samples) * 20),
         margin=dict(l=200),
     )
-
     return fig
 
 

@@ -5,6 +5,7 @@ import { Heatmap, HeatmapData } from "./components/Heatmap";
 import { sampleData } from "./assets/sample-data";
 import { Form } from "./components/Form";
 import { FormData, PlotStyle } from "./components/Form/Form.props";
+import { BackendPlot } from "./components/BackendPlot";
 
 export const PlotType = {
   HEATMAP: "heatmap",
@@ -24,6 +25,8 @@ function App() {
     return saved ? JSON.parse(saved) : {};
   });
 
+  const [plotJson, setPlotJson] = React.useState<string | null>(null);
+
   // Save plotStyle to localStorage whenever it changes
   React.useEffect(() => {
     localStorage.setItem("plotStyle", JSON.stringify(plotStyle));
@@ -31,19 +34,36 @@ function App() {
 
   const handleFormChange = (formData: FormData) => {
     if (formData) {
-      fetch(`/api/getplotdata`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setData(data["data"] || []);
-        });
+      if (formData.plot_type == PlotType.BARPLOT) {
+        setPlotJson(null); // Clear previous plot JSON
+        fetch(`/api/getplotdata`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            setData(data["data"] || []);
+          });
+      } else if (formData.plot_type == PlotType.HEATMAP) {
+        setData(null); // Clear previous barplot data
+        fetch(`/api/plot`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            setPlotJson(data["plot"] || []);
+          });
+      }
     } else {
       setData(null);
+      setPlotJson(null);
     }
   };
 
@@ -77,20 +97,7 @@ function App() {
           </div>
         )}
 
-        {Data && Data["plot_type"] === PlotType.HEATMAP && (
-          <div className="flex items-center justify-center">
-            <Heatmap
-              heatmapdata={Data.plot_data as HeatmapData}
-              {...plotStyle}
-            />
-          </div>
-        )}
-        {/* <div className="flex items-center justify-center">
-          <ViolinePlot samples={sampleData} {...plotStyle} />
-        </div>
-        <div className="flex items-center justify-center">
-          <Heatmap samples={sampleData} {...plotStyle} />
-        </div> */}
+        {plotJson && <BackendPlot plotJson={plotJson} />}
       </div>
     </div>
   );

@@ -4,10 +4,13 @@ import os
 from django.http import FileResponse
 from django.shortcuts import render
 import pandas as pd
+import plotly.io as pio
 
 from backend import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+
+from .heatmap import create_heatmap_figure
 
 from . import importing
 
@@ -49,4 +52,25 @@ def getPlotData(request):
 
     return JsonResponse({
         "data": cleavage_enrichment.get_plot_data(formData)
+    })
+
+@csrf_exempt
+def plot_view(request):
+    """
+    Render the plot view.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method"}, status=405)
+    
+    try:
+        formData = json.loads(request.body)
+        print(f"Received formData: {formData}")
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    
+    plot = cleavage_enrichment.get_plot(formData)
+    plot_json = pio.to_json(plot)
+
+    return JsonResponse({
+        "plot": plot_json,
     })

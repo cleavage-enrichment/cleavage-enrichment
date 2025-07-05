@@ -7,6 +7,8 @@ from pyteomics import fasta
 
 import pandas as pd
 import logging
+
+from .heatmap import create_heatmap_figure
 logger = logging.getLogger(__name__)
 
 
@@ -493,6 +495,29 @@ class CleavageEnrichment:
             return self.heatmap_data(**formData)
         elif plottype == self.PlotType.BARPLOT:
             return self.barplot_data(**formData)
+        else:
+            logger.error(f"Unknown plot type: {plottype}")
+            return []
+        
+    def get_plot(self, formData: dict) -> str:
+        plottype: str | None = formData.pop("plot_type", None)
+        if not plottype:
+            logger.error("Plot type not specified in formData.")
+            return []
+
+        if plottype == self.PlotType.HEATMAP:
+            logarithmize_data = formData.pop("logarithmizeData", False)
+            use_log_scale = formData.pop("useLogScale", True)
+
+            data = self.heatmap_data(**formData)
+            fig = create_heatmap_figure(
+                **data["plot_data"],
+                logarithmize_data=logarithmize_data,
+                use_log_scale=use_log_scale,
+            )
+            return fig
+        # elif plottype == self.PlotType.BARPLOT:
+        #     return self.barplot_data(**formData)
         else:
             logger.error(f"Unknown plot type: {plottype}")
             return []

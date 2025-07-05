@@ -15,6 +15,8 @@ export type FormData = {
   reference_group?: Option;
   aggregation_method?: Option;
   metadatafilter?: Record<string, Options>;
+  useLogScale?: boolean;
+  logarithmizeData?: boolean;
 };
 
 export type PlotStyle = {

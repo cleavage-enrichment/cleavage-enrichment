@@ -33,16 +33,13 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
           result[key][subKey] = subValue.map((v) => v.value);
         }
       } else if (Array.isArray(value)) {
-        // Array of Option objects
         result[key] = value.map((v) => v.value);
       } else if (value && typeof value === "object" && "value" in value) {
-        // Single Option object
         result[key] = value.value;
       } else {
         result[key] = value;
       }
     }
-    console.log("Flattened formData:", result);
     return result;
   }
 
@@ -50,7 +47,6 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
   useEffect(() => {
     localStorage.setItem("formData", JSON.stringify(formData));
     onChange(flattenFormData(formData));
-    console.log("Form data changed:", flattenFormData(formData));
   }, [formData]);
 
   // Save style to localStorage whenever it changes
@@ -381,9 +377,9 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               control={
                 <Checkbox
                   id="logarithmizeData"
-                  checked={style.logarithmizeData}
+                  checked={formData.logarithmizeData}
                   onChange={(e) => {
-                    setStyle((prev) => ({
+                    setFormData((prev) => ({
                       ...prev,
                       logarithmizeData: e.target.checked,
                     }));
@@ -397,9 +393,9 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
               control={
                 <Checkbox
                   id="logScale"
-                  checked={style.useLogScale}
+                  checked={formData.useLogScale}
                   onChange={(e) => {
-                    setStyle((prev) => ({
+                    setFormData((prev) => ({
                       ...prev,
                       useLogScale: e.target.checked,
                     }));

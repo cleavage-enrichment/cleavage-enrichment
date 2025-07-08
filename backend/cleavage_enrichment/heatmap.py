@@ -79,7 +79,6 @@ def create_group_heatmap(groups):
     group_heatmap = go.Heatmap(
         z=group_vals.values,
         x=groups.columns,
-        y=list(np.arange(5, groups.shape[0]*10, 10)),
         showscale=False,
         colorscale=[[i / (len(val_to_color)-1) if len(val_to_color) > 1 else 0, c] for i, c in enumerate(val_to_color.values())],
         text=group_text.values,
@@ -189,13 +188,15 @@ def create_heatmap_figure(
       )
     
     if color_groups is not None:
-      fig.add_trace(create_group_heatmap(color_groups))
-      fig.update_layout(
-          xaxis3=dict(
-            domain = [.95, 1],
-          ),
-      )
-
+        group_heatmap = create_group_heatmap(color_groups)
+        if dendrogram:
+            group_heatmap.y = list(np.arange(5, color_groups.shape[0]*10, 10))
+        fig.add_trace(group_heatmap)
+        fig.update_layout(
+            xaxis3=dict(
+                domain = [.95, 1],
+            ),
+        )
     
     fig.update_layout(
         plot_bgcolor='rgba(255,255,255,255)',
@@ -206,10 +207,14 @@ def create_heatmap_figure(
           title = "Amino acid position",
           ticks = "",
         ),
-        yaxis={'title': ylabel},
-        width=800,
-        height=max(400, 150 + len(samples) * 20),
-        margin=dict(l=200),
+        yaxis=dict(
+            title = ylabel,
+            # tickvalues = 
+            # ticktext = df.index.tolist(),
+        ),
+        width = 800,
+        height = max(400, 150 + len(samples) * 20),
+        margin = dict(l=200),
     )
     return fig
 

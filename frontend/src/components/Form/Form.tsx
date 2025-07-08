@@ -23,19 +23,25 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
         };
   });
 
+  // translates Options to value
   function flattenFormData(formData: FormData) {
     const result: Record<string, any> = {};
     for (const [key, value] of Object.entries(formData)) {
+      // For metadatafilter, translate dict of Options key value pairs
       if (key == "metadatafilter") {
-        // Flatten metadatafilter object
         result[key] = {};
         for (const [subKey, subValue] of Object.entries(value)) {
           result[key][subKey] = subValue.map((v) => v.value);
         }
+        // For Multiselects
       } else if (Array.isArray(value)) {
         result[key] = value.map((v) => v.value);
+
+        // For Single Selects
       } else if (value && typeof value === "object" && "value" in value) {
         result[key] = value.value;
+
+        // For all other values
       } else {
         result[key] = value;
       }
@@ -57,10 +63,6 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
     }
   }, [style]);
 
-  const [metadataGroups, setMetadataGroups] = React.useState<
-    Record<string, string[]>
-  >({});
-
   useEffect(() => {
     if (onStyleChange) {
       onStyleChange(style);
@@ -78,6 +80,11 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
         callback(options);
       });
   };
+
+  // Metadata groups
+  const [metadataGroups, setMetadataGroups] = React.useState<
+    Record<string, string[]>
+  >({});
 
   function loadMetadataGroups() {
     fetch(`/api/getmetadatagroups`)
@@ -372,6 +379,23 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
 
         {formData.plot_type?.value === "heatmap" && (
           <>
+            <label htmlFor="colored_metadata">Colored Metadata</label>
+            <Select
+              inputId="colored_metadata"
+              options={Object.keys(metadataGroups).map((key) => ({
+                value: key,
+                label: key,
+              }))}
+              isClearable
+              value={formData.colored_metadata}
+              onChange={(selectedOption) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  colored_metadata: selectedOption ?? undefined,
+                }));
+              }}
+            />
+
             <FormControlLabel
               className="w-full"
               control={
@@ -403,6 +427,22 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
                 />
               }
               label="use log scale"
+            />
+            <FormControlLabel
+              className="w-full"
+              control={
+                <Checkbox
+                  id="dendrogram"
+                  checked={formData.dendrogram}
+                  onChange={(e) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      dendrogram: e.target.checked,
+                    }));
+                  }}
+                />
+              }
+              label="Create Dendrogram"
             />
           </>
         )}

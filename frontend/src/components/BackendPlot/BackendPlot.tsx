@@ -11,7 +11,7 @@ export const BackendPlot: React.FC<BackendPlotProps> = ({ plotJson }) => {
       layout={fig.layout}
       frames={fig.frames}
       config={fig.config}
-      style={{ width: "100%", height: "100%" }}
+      style={{ width: "100%" }}
     />
   );
 };

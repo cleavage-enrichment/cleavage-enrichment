@@ -17,6 +17,8 @@ export type FormData = {
   metadatafilter?: Record<string, Options>;
   useLogScale?: boolean;
   logarithmizeData?: boolean;
+  dendrogram?: boolean;
+  colored_metadata?: Option;
 };
 
 export type PlotStyle = {

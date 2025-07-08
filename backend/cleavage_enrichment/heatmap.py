@@ -1,3 +1,4 @@
+import logging
 import math
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
@@ -6,20 +7,15 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
+logger = logging.getLogger(__name__)
+
 def log(x):
     return np.log10(x) if x > 0 else 0
 
 def pot(x):
     return 10 ** x if x > 0 else 0
 
-def significant_figures(x, figures=2):
-    if x == 0:
-        return 0
-    power = math.floor(math.log10(abs(x)))
-    return round(x, -(power - figures + 1))
-
 def scientific_notation(value, precision=1):
-    value = significant_figures(value, precision+1)
     return f"{value:.{precision}e}"
 
 def calculate_ticks(data: list, is_log_scale=True, tickcount=4):
@@ -64,7 +60,7 @@ def create_dendrogram(data_matrix: pd.DataFrame, orientation='right'):
 def create_group_heatmap(groups):
     #color assignment
     unique_groups = groups.iloc[:,0].unique()
-    color_palette = px.colors.qualitative.Plotly
+    color_palette = px.colors.qualitative.Dark2
 
     group_to_color = {
         group: color_palette[i % len(color_palette)]
@@ -85,7 +81,7 @@ def create_group_heatmap(groups):
         x=groups.columns,
         y=list(np.arange(5, groups.shape[0]*10, 10)),
         showscale=False,
-        colorscale=[[i / (len(val_to_color)-1), c] for i, c in enumerate(val_to_color.values())],
+        colorscale=[[i / (len(val_to_color)-1) if len(val_to_color) > 1 else 0, c] for i, c in enumerate(val_to_color.values())],
         text=group_text.values,
         hovertemplate="%{text}<extra></extra>",
         xaxis='x3',
@@ -95,14 +91,14 @@ def create_group_heatmap(groups):
     return group_heatmap
 
 def create_heatmap_figure(
-    samples,
-    metric = "",
-    name = "",
-    ylabel = "",
-    logarithmize_data = False,
-    use_log_scale = True,
-    create_dendrogram = True,
-    groups = None,
+    samples: dict,
+    metric: str = "",
+    name: str = "",
+    ylabel: str = "",
+    logarithmize_data: bool = False,
+    use_log_scale: bool = True,
+    dendrogram: bool = False,
+    color_groups: pd.DataFrame = None,
 ):
     max_length = max(len(s["data"]) for s in samples) if samples else 0
     for s in samples:
@@ -113,25 +109,36 @@ def create_heatmap_figure(
         index=[s["label"] for s in samples]
     )
 
+    if dendrogram and len(samples) <= 1:
+        logger.warning("Dendrogram needs at least two samples to be created. Skipping dendrogram.")
+        dendrogram = False
+    
+    if color_groups is not None and len(color_groups) != len(df):
+        logger.warning("Color groups do not match the number of samples. Skipping color groups.")
+        color_groups = None
+
     if logarithmize_data:
         df = df.map(log)
 
-    if create_dendrogram:
-      # Create Dendrogram
-      fig = ff.create_dendrogram(df.values, orientation='right')
-      for i in range(len(fig['data'])):
-          fig['data'][i]['xaxis'] = 'x2'
-      
-      ## Reordering of rows
-      dendro_leaves = fig['layout']['yaxis']['ticktext']
-      dendro_leaves = list(map(int, dendro_leaves))
-      df = df.iloc[dendro_leaves,:]
+    if dendrogram:
+        # Create Dendrogram
+        fig = ff.create_dendrogram(df.values, orientation='right')
+        for i in range(len(fig['data'])):
+            fig['data'][i]['xaxis'] = 'x2'
+        
+        ## Reordering of rows
+        dendro_leaves = fig['layout']['yaxis']['ticktext']
+        dendro_leaves = list(map(int, dendro_leaves))
+        df = df.iloc[dendro_leaves,:]
+
+        if color_groups is not None:
+            color_groups = color_groups.iloc[dendro_leaves,:]
 
     if use_log_scale:
         loged_df = df.map(log)
 
     z = loged_df.values if use_log_scale else df.values
-    y = fig['layout']['yaxis']['tickvals'] if create_dendrogram else df.index.tolist()
+    y = fig['layout']['yaxis']['tickvals'] if dendrogram else df.index.tolist()
     x = list(range(1, max_length + 1))
 
     customdata = df.map(lambda x: scientific_notation(x,3)).values
@@ -153,13 +160,13 @@ def create_heatmap_figure(
         ),
     )
 
-    if create_dendrogram:
+    if dendrogram:
       # Add Heatmap Data to Figure
       fig.add_trace(heatmap)
 
       fig.update_layout(
           xaxis=dict(
-            domain = [.15, 0.9 if groups is not None else 1.0],
+            domain = [.15, 0.9 if color_groups is not None else 1.0],
           ),
           xaxis2=dict(
             domain = [0, .15],
@@ -177,12 +184,12 @@ def create_heatmap_figure(
       fig = go.Figure(data=[heatmap])
       fig.update_layout(
           xaxis=dict(
-            domain = [0, 0.9 if groups is not None else 1],
+            domain = [0, 0.9 if color_groups is not None else 1],
           )
       )
     
-    if groups is not None:
-      fig.add_trace(create_group_heatmap(groups))
+    if color_groups is not None:
+      fig.add_trace(create_group_heatmap(color_groups))
       fig.update_layout(
           xaxis3=dict(
             domain = [.95, 1],

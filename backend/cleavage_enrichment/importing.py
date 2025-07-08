@@ -53,6 +53,7 @@ class OutpuKeys:
     LABEL = "label"
     COUNT = "count"
     INTENSITY = "intensity"
+    COLOR_GROUP = "color_group"
 
 class CleavageEnrichment:
     def __init__(self):
@@ -223,7 +224,8 @@ class CleavageEnrichment:
         proteins:list[str],
         aggregation_method:AggregationMethod,
         group_by:GroupBy = GroupBy.PROTEIN,
-        metadatafilter: dict[str, list] = {}
+        metadatafilter: dict[str, list] = {},
+        colored_metadata: str = None
     ) -> list[dict]:
         """
         Get plot data for a specific protein.
@@ -231,9 +233,10 @@ class CleavageEnrichment:
         output:
         [
             {
-            "label": protein_id,
+            "label": groupby name,
             "count": calculated_count,
             "intensity": calculated_intensity,
+            "color_group": contains the group of the colored metadata, if specified
             },
             ...
         ]
@@ -271,11 +274,15 @@ class CleavageEnrichment:
             for group_name, group_df in grouped:
                 count, intensity = self.calculate_count_sum(protein_sequence,peptides=group_df,aggregation_method=aggregation_method)
 
-                output.append({
+                entry = {
                     OutpuKeys.LABEL: f"{group_name}",
                     OutpuKeys.COUNT: count,
                     OutpuKeys.INTENSITY: intensity,
-            })
+                }
+                if colored_metadata in group_df and not group_df[colored_metadata].empty:
+                    entry[OutpuKeys.COLOR_GROUP] = group_df[colored_metadata].iloc[0]
+                output.append(entry)
+
         return output
 
     class PlotType:
@@ -287,7 +294,15 @@ class CleavageEnrichment:
         INTENSITY = "intensity"
         COUNT = "count"
     
-    def heatmap_data(self, proteins = None, aggregation_method: AggregationMethod = None, metric:Metric = None, group_by: GroupBy = None, metadatafilter: dict[str, list] = {}) -> dict:
+    def heatmap_data(
+            self,
+            proteins = None,
+            aggregation_method: AggregationMethod = None,
+            metric:Metric = None,
+            group_by: GroupBy = None,
+            metadatafilter: dict[str, list] = {},
+            dendrogram: bool = False,
+            colored_metadata: str = None) -> dict:
         """
         Output:
         {
@@ -303,75 +318,88 @@ class CleavageEnrichment:
                 "name": "Heatmap for Protein X",
                 "ylabel": "Samples",
                 "metric": "Intensity" or "Count"
+                "dendrogram": boolean indicating if a dendrogram should be created,
+                "color_groups": pd.DataFrame with colored metadata groups if specified
             }
         }
         
         """
-        output = {}
-        output["plot_type"] = self.PlotType.HEATMAP
-        output["plot_data"] = {}
-        output["plot_data"]["samples"] = []
-        output["plot_data"]["name"] = f"Heatmap"
+        heatmap_df = {}
+        heatmap_df["plot_type"] = self.PlotType.HEATMAP
+        heatmap_df["plot_data"] = {}
+        heatmap_df["plot_data"]["samples"] = []
+        heatmap_df["plot_data"]["name"] = f"Heatmap"
+        heatmap_df["plot_data"]["dendrogram"] = dendrogram
+
 
         if not proteins:
             logger.error("No protein specified for heatmap data.")
-            return output
+            return heatmap_df
         if len(proteins) > 1:
             logger.error("Multiple proteins specified for heatmap data. Please select only one protein.")
-            return output
+            return heatmap_df
         protein = proteins[0]
    
-        output["plot_data"]["name"] = f"Heatmap for {protein}"
+        heatmap_df["plot_data"]["name"] = f"Heatmap for {protein}"
 
         if not aggregation_method and (group_by == GroupBy.SAMPLE or metric == self.Metric.COUNT):
             aggregation_method = AggregationMethod.MEDIAN
 
         if not aggregation_method and group_by is not GroupBy.SAMPLE and metric is not self.Metric.INTENSITY:
             logger.error("No aggregation method specified for heatmap data.")
-            return output
+            return heatmap_df
         
         if aggregation_method is None:
             logger.error("No aggregation method specified for heatmap data.")
-            return output
+            return heatmap_df
         
         if metric is None:
             logger.error("No metric specified for heatmap data.")
-            return output
+            return heatmap_df
         if metric not in [self.Metric.INTENSITY, self.Metric.COUNT]:
             logger.error(f"Unknown heatmap metric: {metric}")
-            return output
+            return heatmap_df
         
         if group_by is None:
             logger.error("No group_by method specified for heatmap data.")
-            return output
+            return heatmap_df
         
-        output["plot_data"]["ylabel"] = group_by
+        heatmap_df["plot_data"]["ylabel"] = group_by
 
-        peptide_data: list[dict] = self.protein_plot_data([protein], aggregation_method=aggregation_method, group_by=group_by, metadatafilter=metadatafilter)
+        peptide_data: list[dict] = self.protein_plot_data([protein], aggregation_method=aggregation_method, group_by=group_by, metadatafilter=metadatafilter, colored_metadata=colored_metadata)
+
+        if colored_metadata:
+            color_groups = []
 
         for data in peptide_data:
             label = data[OutpuKeys.LABEL]
             count = data[OutpuKeys.COUNT]
             intensity = data[OutpuKeys.INTENSITY]
 
+            if colored_metadata:
+                color_groups.append(data[OutpuKeys.COLOR_GROUP])
+
             new_sample = {
                 "label": label,
             }
 
             if metric == self.Metric.INTENSITY:
-                output["plot_data"]["metric"] = "Intensity"
+                heatmap_df["plot_data"]["metric"] = "Intensity"
                 new_sample["data"] = intensity
 
             elif metric == self.Metric.COUNT:
-                output["plot_data"]["metric"] = "Count"
+                heatmap_df["plot_data"]["metric"] = "Count"
                 new_sample["data"] = count
             else:
                 logger.error(f"Unknown heatmap metric: {metric}")
-                return output
+                return heatmap_df
             
-            output["plot_data"]["samples"].append(new_sample)
+            heatmap_df["plot_data"]["samples"].append(new_sample)
 
-        return output
+            if colored_metadata:
+                heatmap_df["plot_data"]["color_groups"] = pd.DataFrame({colored_metadata: color_groups})
+
+        return heatmap_df
     
 
     def barplot_data(self, group_by: GroupBy = None, proteins: list[str] = None, aggregation_method: AggregationMethod = None, metric: Metric = None, reference_group: str = None, metadatafilter: dict[str, list[str]] = {}) -> dict:

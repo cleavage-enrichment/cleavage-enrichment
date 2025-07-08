@@ -344,7 +344,7 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
 
             {Object.entries(metadataGroups).map(([key, options]) => (
               <React.Fragment key={key}>
-                <label htmlFor={key}>{key}</label>
+                <label htmlFor={key}>{key} (optional)</label>
                 <Select
                   inputId={key}
                   options={options.map((o) => ({

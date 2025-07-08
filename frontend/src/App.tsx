@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import { BarplotData, ViolinePlot } from "./components/ViolinePlot";
+import { BarplotData, BarPlot } from "./components/BarPlot";
 import { Heatmap, HeatmapData } from "./components/Heatmap";
 import { sampleData } from "./assets/sample-data";
 import { Form } from "./components/Form";
@@ -95,7 +95,7 @@ function App() {
           <h2 className="text-xl font-semibold mb-4">Plots</h2>
           {Data && Data["plot_type"] === PlotType.BARPLOT && (
             <div className="flex items-center justify-center">
-              <ViolinePlot
+              <BarPlot
                 barplotData={Data.plot_data as BarplotData}
                 {...plotStyle}
               />

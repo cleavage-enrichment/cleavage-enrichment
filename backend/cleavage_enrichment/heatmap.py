@@ -41,11 +41,16 @@ def calculate_ticks(data: list, is_log_scale=True, tickcount=4):
         
     return tickvals, ticktext
 
-def create_dendrogram(data_matrix: pd.DataFrame, orientation='right'):
+def create_dendrogram(data_matrix: pd.DataFrame):
     """
     Create a dendrogram using Plotly.
+    Args:
+        data_matrix (pd.DataFrame): DataFrame containing the data to be clustered.
+            The index should represent the samples and the columns should represent the features.
+    Returns:
+        fig (go.Figure): A Plotly figure object containing the dendrogram.
     """
-    fig = ff.create_dendrogram(data_matrix.values, orientation=orientation)
+    fig = ff.create_dendrogram(data_matrix.values, orientation='right')
     for i in range(len(fig['data'])):
         fig['data'][i]['xaxis'] = 'x2'
 
@@ -57,7 +62,17 @@ def create_dendrogram(data_matrix: pd.DataFrame, orientation='right'):
 
     return fig, data_matrix
 
-def create_group_heatmap(groups):
+def create_group_heatmap(groups: pd.DataFrame):
+    """
+    Create a heatmap for groups using Plotly.
+    Args:
+        groups (pd.DataFrame): DataFrame containing group information for each sample.
+            The dataframe should have one column with group names and one row for each sample.
+            the column name is the type of group (e.g. "Batch") and the values are the group names.
+    Returns:
+        go.Heatmap: A Plotly heatmap object representing the groups.
+    """
+
     #color assignment
     unique_groups = groups.iloc[:,0].unique()
     color_palette = px.colors.qualitative.Dark2
@@ -91,14 +106,42 @@ def create_group_heatmap(groups):
 
 def create_heatmap_figure(
     samples: dict,
-    metric: str = "",
     name: str = "",
+    xlabel: str = "Amino acid position",
     ylabel: str = "",
+    zlabel: str = "",
     logarithmize_data: bool = False,
     use_log_scale: bool = True,
     dendrogram: bool = False,
     color_groups: pd.DataFrame = None,
 ):
+    """
+    Create a heatmap figure using Plotly.
+    Args:
+        samples (list): List of dictionaries containing sample data.
+            sample format:
+            [
+                {
+                    "label": "Sample 1",
+                    "data": [1, 2, 3, ...]  # List of values for each amino acid position
+                },
+                {
+                    "label": "Sample 2",
+                    "data": [4, 5, 6, ...]
+                },
+                ...
+            ]
+        name (str): Title of the heatmap.
+        ylabel (str): Label for the y-axis.
+        zlabel (str): Label for the z-axis (color bar).
+        logarithmize_data (bool): Whether to apply logarithm transformation to the data.
+        use_log_scale (bool): Whether to use logarithmic scale for the zaxis/color bar.
+        dendrogram (bool): Whether to cluster the rows and include a dendrogram in the heatmap.
+        color_groups (pd.DataFrame): DataFrame containing groups for the samples. These groups will be displayed as a separate heatmap on the right side of the main heatmap.
+    Returns:
+        go.Figure: A Plotly figure object containing the heatmap.
+    """
+
     max_length = max(len(s["data"]) for s in samples) if samples else 0
     for s in samples:
         s["data"] = s["data"] + [0] * (max_length - len(s["data"]))
@@ -149,10 +192,10 @@ def create_heatmap_figure(
         y=y,
         z=z,
         customdata=customdata,
-        hovertemplate=f"{metric}: %{{customdata}}<extra>Position: %{{x}}</extra>",
+        hovertemplate=f"{zlabel}: %{{customdata}}<extra>Position: %{{x}}</extra>",
         colorscale="bluered",
         colorbar=dict(
-            title = metric,
+            title = zlabel,
             tickmode = "array",
             tickvals = tickvals,
             ticktext = ticktext,
@@ -204,97 +247,14 @@ def create_heatmap_figure(
         title=name,
         xaxis=dict(
           range = [0.5, max_length+0.5],
-          title = "Amino acid position",
+          title = xlabel,
           ticks = "",
         ),
         yaxis=dict(
             title = ylabel,
-            # tickvalues = 
-            # ticktext = df.index.tolist(),
         ),
         width = 800,
         height = max(400, 150 + len(samples) * 20),
         margin = dict(l=200),
     )
-    return fig
-
-
-def create_heatmap_with_dendrogram(data_matrix: pd.DataFrame = None, name: str = None, ylabel: str = "", metric: str = ""):
-    """
-    Create a heatmap with dendrogram using Plotly.
-    This function generates a sample DataFrame, creates a dendrogram,
-    reorders the DataFrame based on the dendrogram, and then creates a heatmap.
-    """
-    data = {
-        "Feature1": [1, 2, 1, 1, 1],
-        "Feature2": [2, 1, 1, 1, 1],
-        "Feature3": [1, 2, 9, 8, 9],
-        "Feature4": [2, 1, 7, 8, 9],
-        "Feature5": [1, 1, 1, 1, 1],
-        "Feature6": [1, 1, 1, 1, 1]
-    }
-    df = pd.DataFrame(data)
-    df = df.transpose()
-
-    # Create Dendrogram
-    fig = ff.create_dendrogram(df.values, orientation='right')
-    for i in range(len(fig['data'])):
-        fig['data'][i]['xaxis'] = 'x2'
-
-    ## Reordering of rows
-    dendro_leaves = fig['layout']['yaxis']['ticktext']
-    dendro_leaves = list(map(int, dendro_leaves))
-
-    df = df.iloc[dendro_leaves,:]
-
-    # Create Heatmap
-    heatmap = go.Heatmap(
-        y = fig['layout']['yaxis']['tickvals'],
-        z = df.values,
-        colorscale = 'Blues',
-    )
-
-    # Add Heatmap Data to Figure
-    fig.add_trace(heatmap)
-
-    # Styling
-    fig.update_layout({
-        'width':800,
-        'height':800,
-        'showlegend':False,
-        'hovermode': 'closest'
-    })
-
-    # Edit xaxis
-    fig.update_layout(xaxis={'domain': [.15, 0.9],
-                                    'mirror': False,
-                                    'showgrid': False,
-                                    'showline': False,
-                                    'zeroline': False,
-                                    'ticks':"",
-                                    'tickvals': np.arange(len(df.columns)), # Set tick values
-                                    'ticktext': list(range(1,len(df.columns)+1))  # Set tick labels
-                                    })
-    
-    # Edit xaxis2
-    fig.update_layout(xaxis2={
-                                    'domain': [0, .15],
-                                    'showgrid': False,
-                                    'showline': False,
-                                    'zeroline': False,
-                                    'showticklabels': False,
-                                    'ticks':""})
-
-    # Edit yaxis
-    fig.update_layout(yaxis={
-                                    'domain': [0, 1],
-                                    'mirror': False,
-                                    'showgrid': False,
-                                    'showline': False,
-                                    'zeroline': False,
-                                    'side': 'right',
-                                    'ticktext': df.index.tolist(),
-                                    'ticks': ""
-                            })
-
     return fig

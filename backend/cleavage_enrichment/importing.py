@@ -1,43 +1,34 @@
-from enum import Enum
 from functools import wraps
 import math
 import os
-from typing import Callable, Literal
+from typing import Callable
 from pyteomics import fasta
-
 import pandas as pd
 import logging
 
 from .heatmap import create_heatmap_figure
+from backend import settings
+
 logger = logging.getLogger(__name__)
 
 
-from backend import settings
-
-# Sample,Protein ID,Gene,iBAQ
-class ProteinDF:
+# Dataframes
+class PeptideDF:
     SAMPLE = "Sample"
-    ID = "Protein ID"
-    GENE = "Gene"
-    IBAQ = "iBAQ"
-
-class PeptideDF: # Sample,Protein ID,Sequence,Intensity,PEP
-    SAMPLE = "Sample"
-    ID = "Protein ID"
+    PROTEIN_ID = "Protein ID"
     SEQUENCE = "Sequence"
     INTENSITY = "Intensity"
-    PEP = "PEP"
 
 class Meta:
     SAMPLE = "Sample"
-    GROUP = "Group"
-    BATCH = "Batch"
 
 class FastaDF:
     ID = "id"
     DESCRIPTION = "description"
     SEQUENCE = "sequence"
 
+
+# Form options
 class AggregationMethod:
     MEAN = "mean"
     SUM = "sum"
@@ -144,7 +135,7 @@ class CleavageEnrichment:
         Search for proteins in the dataset based on a filter string.
         """
 
-        unique_proteins = self.peptidedata[ProteinDF.ID].dropna().unique()
+        unique_proteins = self.peptidedata[PeptideDF.PROTEIN_ID].dropna().unique()
 
         unique_series = pd.Series(unique_proteins)
 
@@ -263,12 +254,12 @@ class CleavageEnrichment:
         for protein_id in proteins:
             protein_sequence = self.getProteinSequence(protein_id)
 
-            sample_peptides = peptides[peptides[PeptideDF.ID] == protein_id]
+            sample_peptides = peptides[peptides[PeptideDF.PROTEIN_ID] == protein_id]
             if sample_peptides.empty:
                 logger.warning(f"No peptides found for protein {protein_id} in metadata.")
                 continue
 
-            group_by = group_by if group_by != GroupBy.PROTEIN else PeptideDF.ID
+            group_by = group_by if group_by != GroupBy.PROTEIN else PeptideDF.PROTEIN_ID
             grouped = sample_peptides.groupby(group_by)
 
             for group_name, group_df in grouped:
@@ -384,11 +375,11 @@ class CleavageEnrichment:
             }
 
             if metric == self.Metric.INTENSITY:
-                heatmap_df["plot_data"]["metric"] = "Intensity"
+                heatmap_df["plot_data"]["zlabel"] = "Intensity"
                 new_sample["data"] = intensity
 
             elif metric == self.Metric.COUNT:
-                heatmap_df["plot_data"]["metric"] = "Count"
+                heatmap_df["plot_data"]["zlabel"] = "Count"
                 new_sample["data"] = count
             else:
                 logger.error(f"Unknown heatmap metric: {metric}")

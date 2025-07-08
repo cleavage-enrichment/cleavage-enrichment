@@ -6,6 +6,7 @@ import { sampleData } from "./assets/sample-data";
 import { Form } from "./components/Form";
 import { FormData, PlotStyle } from "./components/Form/Form.props";
 import { BackendPlot } from "./components/BackendPlot";
+import { LoadingSpinner } from "./components/LoadingSpinner";
 
 export const PlotType = {
   HEATMAP: "heatmap",
@@ -26,6 +27,7 @@ function App() {
   });
 
   const [plotJson, setPlotJson] = React.useState<string | null>(null);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   // Save plotStyle to localStorage whenever it changes
   React.useEffect(() => {
@@ -33,6 +35,7 @@ function App() {
   }, [plotStyle]);
 
   const handleFormChange = (formData: FormData) => {
+    setIsLoading(true);
     if (formData) {
       if (formData.plot_type == PlotType.BARPLOT) {
         setPlotJson(null); // Clear previous plot JSON
@@ -46,6 +49,9 @@ function App() {
           .then((res) => res.json())
           .then((data) => {
             setData(data["data"] || []);
+          })
+          .finally(() => {
+            setIsLoading(false);
           });
       } else if (formData.plot_type == PlotType.HEATMAP) {
         setData(null); // Clear previous barplot data
@@ -59,6 +65,9 @@ function App() {
           .then((res) => res.json())
           .then((data) => {
             setPlotJson(data["plot"] || []);
+          })
+          .finally(() => {
+            setIsLoading(false);
           });
       }
     } else {
@@ -79,26 +88,22 @@ function App() {
         />
       </div>
 
-      {/* <!-- Main Content/Plots --> */}
-      <div className="w-full p-6 overflow-y-auto">
-        <h2 className="text-xl font-semibold mb-4">Plots</h2>
-        {Data === null && (
-          <div className="text-center text-gray-500">
-            Please select at least one protein to show the plot.
-          </div>
-        )}
+      {isLoading && <LoadingSpinner />}
 
-        {Data && Data["plot_type"] === PlotType.BARPLOT && (
-          <div className="flex items-center justify-center">
-            <ViolinePlot
-              barplotData={Data.plot_data as BarplotData}
-              {...plotStyle}
-            />
-          </div>
-        )}
-
-        {plotJson && <BackendPlot plotJson={plotJson} />}
-      </div>
+      {!isLoading && (
+        <div className="w-full p-6 lg:overflow-y-auto">
+          <h2 className="text-xl font-semibold mb-4">Plots</h2>
+          {Data && Data["plot_type"] === PlotType.BARPLOT && (
+            <div className="flex items-center justify-center">
+              <ViolinePlot
+                barplotData={Data.plot_data as BarplotData}
+                {...plotStyle}
+              />
+            </div>
+          )}
+          {plotJson && <BackendPlot plotJson={plotJson} />}
+        </div>
+      )}
     </div>
   );
 }

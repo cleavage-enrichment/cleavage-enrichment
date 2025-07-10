@@ -8,6 +8,19 @@ export const UploadForm: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [peptideFileName, setPeptideFileName] = useState<string>("");
+  const [metaFileName, setMetaFileName] = useState<string>("");
+  const [fastaFileName, setFastaFileName] = useState<string>("");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
+    setSuccess(null);
+    const { id, files } = e.target;
+    const name = files?.[0]?.name || "";
+    if (id === "peptide-upload") setPeptideFileName(name);
+    if (id === "meta-upload") setMetaFileName(name);
+    if (id === "fasta-upload") setFastaFileName(name);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,12 +51,6 @@ export const UploadForm: React.FC = () => {
         throw new Error("Upload failed.");
       }
       setSuccess("File uploaded successfully.");
-      // if (peptideFileInputRef.current)
-      //     peptideFileInputRef.current.value = "";
-      // if (metaFileInputRef.current)
-      //     metaFileInputRef.current.value = "";
-      // if (fastaFileInputRef.current)
-      //     fastaFileInputRef.current.value = "";
     } catch (err: any) {
       setError(err.message || "Upload failed.");
     } finally {
@@ -51,73 +58,70 @@ export const UploadForm: React.FC = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError(null);
-    setSuccess(null);
-  };
+  const inputLabelClass = "block text-sm font-medium text-gray-700 mb-1";
+  const fileInputContainerClass = "flex items-center space-x-2";
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 w-full max-w-md mx-auto bg-white p-6 rounded-lg shadow"
+      className="space-y-2 w-full max-w-md mx-auto bg-white p-6 rounded-lg shadow"
     >
-      <label
-        htmlFor="peptide-upload"
-        className="block text-sm font-medium text-gray-700 mb-1"
-      >
-        Peptide File
-      </label>
-      <div className="flex items-center space-x-2">
-        <input
-          id="peptide-upload"
-          type="file"
-          ref={peptideFileInputRef}
-          onChange={handleFileChange}
-          className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4
-                        file:rounded file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100"
-        />
+      <h2 className="text-xl font-semibold mb-4">Data upload</h2>
+
+      {/* Peptide File */}
+      <label className={inputLabelClass}>Peptide File</label>
+      <div className={fileInputContainerClass}>
+        <label className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded cursor-pointer transition">
+          Upload
+          <input
+            id="peptide-upload"
+            type="file"
+            ref={peptideFileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </label>
+        <span className="text-xs text-gray-500">
+          {peptideFileName || "No file selected"}
+        </span>
       </div>
-      <label
-        htmlFor="meta-upload"
-        className="block text-sm font-medium text-gray-700 mb-1"
-      >
-        Metadata File
-      </label>
-      <div className="flex items-center space-x-2">
-        <input
-          id="meta-upload"
-          type="file"
-          ref={metaFileInputRef}
-          onChange={handleFileChange}
-          className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4
-                        file:rounded file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100"
-        />
+
+      {/* Metadata File */}
+      <label className={inputLabelClass}>Metadata File</label>
+      <div className={fileInputContainerClass}>
+        <label className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded cursor-pointer transition">
+          Upload
+          <input
+            id="meta-upload"
+            type="file"
+            ref={metaFileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </label>
+        <span className="text-xs text-gray-500">
+          {metaFileName || "No file selected"}
+        </span>
       </div>
-      <label
-        htmlFor="fasta-upload"
-        className="block text-sm font-medium text-gray-700 mb-1"
-      >
-        Fasta File
-      </label>
-      <div className="flex items-center space-x-2">
-        <input
-          id="fasta-upload"
-          type="file"
-          ref={fastaFileInputRef}
-          onChange={handleFileChange}
-          className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4
-                        file:rounded file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100"
-        />
+
+      {/* Fasta File */}
+      <label className={inputLabelClass}>Fasta File</label>
+      <div className={fileInputContainerClass}>
+        <label className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded cursor-pointer transition">
+          Upload
+          <input
+            id="fasta-upload"
+            type="file"
+            ref={fastaFileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </label>
+        <span className="text-xs text-gray-500">
+          {fastaFileName || "No file selected"}
+        </span>
       </div>
+
       <button
         type="submit"
         className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition"

@@ -1,10 +1,9 @@
 import React from "react";
 import "./App.css";
 import { BarplotData, BarPlot } from "./components/BarPlot";
-import { Heatmap, HeatmapData } from "./components/Heatmap";
-import { sampleData } from "./assets/sample-data";
+import { HeatmapData } from "./components/Heatmap";
 import { Form } from "./components/Form";
-import { FormData, PlotStyle } from "./components/Form/Form.props";
+import { PlotStyle } from "./components/Form/Form.props";
 import { BackendPlot } from "./components/BackendPlot";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { UploadForm } from "./components/UploadForm/UploadForm";
@@ -79,35 +78,42 @@ function App() {
 
   return (
     <div className="w-full flex flex-col lg:flex-row lg:h-screen">
-      {/* <!-- Form --> */}
-      <div className="w-full lg:w-1/4 p-6 lg:overflow-y-auto overflow-visible">
-        <h1 className="text-2xl font-bold mb-4">Cleavage Enrichment</h1>
-        <UploadForm />
-        <Form
-          onChange={handleFormChange}
-          onStyleChange={(style) => {
-            setPlotStyle(style);
-          }}
-        />
-      </div>
+      {/* Top Bar
+      <div className="fixed top-0 left-0 w-full z-50 bg-blue-700 text-white px-6 py-3 shadow flex items-center">
+        <span className="font-semibold text-lg tracking-wide">Cleavage Enrichment Dashboard</span>
+      </div> */}
 
-      {/* <!-- Plots --> */}
-      {isLoading && <LoadingSpinner />}
-
-      {!isLoading && (
-        <div className="w-full p-6 lg:overflow-y-auto">
-          <h2 className="text-xl font-semibold mb-4">Plots</h2>
-          {Data && Data["plot_type"] === PlotType.BARPLOT && (
-            <div className="flex items-center justify-center">
-              <BarPlot
-                barplotData={Data.plot_data as BarplotData}
-                {...plotStyle}
-              />
-            </div>
-          )}
-          {plotJson && <BackendPlot plotJson={plotJson} />}
+      {/* Main Content with padding to avoid overlap */}
+      <div className="flex flex-1 flex-col lg:flex-row w-full">
+        {" "}
+        {/* pt-16 */}
+        {/* <!-- Form --> */}
+        <div className="w-full lg:w-1/4 p-6 lg:overflow-y-auto overflow-visible scrollbar-none hide-scrollbar">
+          <UploadForm />
+          <Form
+            onChange={handleFormChange}
+            onStyleChange={(style) => {
+              setPlotStyle(style);
+            }}
+          />
         </div>
-      )}
+        {/* <!-- Plots --> */}
+        {isLoading && <LoadingSpinner />}
+        {!isLoading && (
+          <div className="w-full p-6 lg:overflow-y-auto">
+            <h2 className="text-xl font-semibold mb-4">Plots</h2>
+            {Data && Data["plot_type"] === PlotType.BARPLOT && (
+              <div className="flex items-center justify-center">
+                <BarPlot
+                  barplotData={Data.plot_data as BarplotData}
+                  {...plotStyle}
+                />
+              </div>
+            )}
+            {plotJson && <BackendPlot plotJson={plotJson} />}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

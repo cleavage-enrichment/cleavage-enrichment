@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import uuid
 from django.http import FileResponse
 from django.shortcuts import render
 import pandas as pd
@@ -9,16 +10,51 @@ import plotly.io as pio
 from backend import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.core.cache import cache
 
-from .heatmap import create_heatmap_figure
-
-from . import importing
+from .cleavage_enrichment import CleavageEnrichment
 
 def index(request):
     file_path = settings.STATICFILES_BASE / 'frontend' / 'index.html'
     return FileResponse(open(file_path, 'rb'), content_type='text/html')
 
-cleavage_enrichment = importing.CleavageEnrichment()
+cleavage_enrichment = CleavageEnrichment()
+
+@csrf_exempt
+def upload(request):
+    """
+    Handle file upload and process the data.
+    """
+    if request.method == 'POST':
+        global peptide_df
+        global metadata_groups
+
+        peptide_df = None
+        upload_id = str(uuid.uuid4())
+
+        peptide_file = request.FILES.get('peptide_file', None)
+        meta_file = request.FILES.get('meta_file', None)
+        fasta_file = request.FILES.get('fasta_file', None)
+
+        if not peptide_file or not meta_file or not fasta_file:
+            return JsonResponse({"error": "Not all files uploaded"}, status=400)
+
+        cleavage_enrichment.add_data(
+            peptide_file=peptide_file,
+            metadata_file=meta_file,
+            fasta_file=fasta_file
+        )
+
+        try:
+            return JsonResponse({"message": "File processed successfully"})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
+def upload_progress(request, upload_id):
+    progress = cache.get(f"upload_progress_{upload_id}", 0)
+    return JsonResponse({"progress": progress})
 
 def getProteins(request):
     """

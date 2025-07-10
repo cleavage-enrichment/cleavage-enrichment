@@ -35,7 +35,7 @@ function App() {
     localStorage.setItem("plotStyle", JSON.stringify(plotStyle));
   }, [plotStyle]);
 
-  const handleFormChange = (formData: FormData) => {
+  const handleFormChange = (formData) => {
     setIsLoading(true);
     if (formData) {
       if (formData.plot_type == PlotType.BARPLOT) {
@@ -79,7 +79,7 @@ function App() {
 
   return (
     <div className="w-full flex flex-col lg:flex-row lg:h-screen">
-      {/* <!-- Sidebar/Form --> */}
+      {/* <!-- Form --> */}
       <div className="w-full lg:w-1/4 p-6 lg:overflow-y-auto overflow-visible">
         <h1 className="text-2xl font-bold mb-4">Cleavage Enrichment</h1>
         <UploadForm />
@@ -91,6 +91,7 @@ function App() {
         />
       </div>
 
+      {/* <!-- Plots --> */}
       {isLoading && <LoadingSpinner />}
 
       {!isLoading && (

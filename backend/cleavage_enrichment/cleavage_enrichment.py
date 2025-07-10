@@ -1,148 +1,47 @@
-from functools import wraps
-import math
-import os
-from typing import Callable
-from pyteomics import fasta
-import pandas as pd
 import logging
+from typing import IO
 
+import pandas as pd
+
+from .constants import AggregationMethod, FastaDF, GroupBy, Meta, OutpuKeys, PeptideDF
 from .heatmap import create_heatmap_figure
-from backend import settings
+from .io_utils import read_fasta_file, read_metadata_file, read_peptide_file
+from .processing import calculate_count_sum
 
 logger = logging.getLogger(__name__)
 
 
-# Dataframes
-class PeptideDF:
-    SAMPLE = "Sample"
-    PROTEIN_ID = "Protein ID"
-    SEQUENCE = "Sequence"
-    INTENSITY = "Intensity"
-
-class Meta:
-    SAMPLE = "Sample"
-
-class FastaDF:
-    ID = "id"
-    DESCRIPTION = "description"
-    SEQUENCE = "sequence"
-
-
-# Form options
-class AggregationMethod:
-    MEAN = "mean"
-    SUM = "sum"
-    MEDIAN = "median"
-
-class GroupBy:
-    PROTEIN = "protein"
-    SAMPLE = "sample"
-    GROUP = "group"
-    BATCH = "batch"
-
-class OutpuKeys:
-    LABEL = "label"
-    COUNT = "count"
-    INTENSITY = "intensity"
-    COLOR_GROUP = "color_group"
-
 class CleavageEnrichment:
     def __init__(self):
-        self.peptidedata: pd.DataFrame = None
+        self.peptides: pd.DataFrame = None
         self.metadata: pd.DataFrame = None
         self.fastadata: pd.DataFrame = None
-
-    @staticmethod
-    def read_csv(file_path):
-        """
-        Reads a CSV file and returns a DataFrame.
-        Raises FileNotFoundError if the file does not exist.
-        """
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Data file not found at {file_path}")
-        
-        return pd.read_csv(file_path)
-
-    @staticmethod
-    def read_fasta(file_path):
-        """
-        Reads a FASTA file and returns a DataFrame with protein IDs and sequences.
-        Raises FileNotFoundError if the file does not exist.
-
-        returns dataframe with columns:
-        - id: Protein ID
-        - description: Description of the protein
-        - sequence: Amino acid sequence of the protein
-        """
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"Data file not found at {file_path}")
-
-        records = []
-
-        no_id = False
-
-        with fasta.read(str(file_path)) as entries:
-            for description, sequence in entries:
-                parsed = fasta.parse(description)
-                protein_id = parsed.get('id', None)
-
-                if protein_id is None:
-                    no_id = True
-                
-                records.append({
-                    FastaDF.ID: protein_id,
-                    FastaDF.SEQUENCE: sequence
-                })
-
-        if no_id:
-            logger.warning(f"Some entries in the FASTA file {file_path} do not have an ID. Please ensure all entries have a unique ID.")
-
-        return pd.DataFrame(records)
     
-    def load_peptides(self) -> None:
-        if self.peptidedata is None:
-            self.peptidedata = self.read_csv(settings.STATICFILES_BASE / "PeptideImport.csv")
-
-    def load_metadata(self) -> None:
-        if self.metadata is None:
-            self.metadata = self.read_csv(settings.STATICFILES_BASE / "meta.csv")
-            if Meta.SAMPLE not in self.metadata.columns:
-                logger.error(f"Metadata file does not contain the required column '{Meta.SAMPLE}'. Please check the metadata file.")
-                self.metadata = None
-
-    def load_fasta(self) -> None:
-        if self.fastadata is None:
-            self.fastadata = self.read_fasta(settings.STATICFILES_BASE / "uniprot_sprot.fasta")
-
-    def data_needed(func: Callable):
+    def add_metadata(self, file: IO) -> None:
+        self.metadata = read_metadata_file(file)
+    
+    def add_peptides(self, file: IO) -> None:
+        self.peptides = read_peptide_file(file)
+    
+    def add_fasta(self, file: IO) -> None:
+        self.fastadata = read_fasta_file(file)
+    
+    def add_data(self, peptide_file: IO, metadata_file: IO, fasta_file: IO) -> None:
+        """ Add all data at once.
         """
-        Decorator to ensure data is loaded before executing the function.
-        """
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            if self.peptidedata is None:
-                self.load_peptides()
-            if self.metadata is None:
-                self.load_metadata()
-            if self.fastadata is None:
-                self.load_fasta()
-            return func(self, *args, **kwargs)
-        return wrapper
+        self.add_peptides(peptide_file)
+        self.add_metadata(metadata_file)
+        self.add_fasta(fasta_file)
 
-    @data_needed
     def getProteins(self, filter="", count=5):
         """
         Search for proteins in the dataset based on a filter string.
         """
-
-        unique_proteins = self.peptidedata[PeptideDF.PROTEIN_ID].dropna().unique()
-
+        unique_proteins = self.peptides[PeptideDF.PROTEIN_ID].dropna().unique()
         unique_series = pd.Series(unique_proteins)
-
         filtered = unique_series[unique_series.str.contains(filter, case=False, na=False)]
         return filtered.head(count).tolist()
 
-    @data_needed
     def get_metadata_groups(self) -> dict[str, list[str]]:
         groups = {}
         for column in self.metadata.columns:
@@ -150,53 +49,6 @@ class CleavageEnrichment:
             groups[column] = unique_values.tolist()
         return groups
 
-    def find_peptide_position(self, protein_sequence: str, peptide_sequence: str) -> tuple[int, int]:
-        """
-        Find the start and end positions of a peptide in a protein sequence.
-        Returns a tuple (start, end) .
-
-        start and end inclusive 1-based indexing.
-
-        when not found: start = 0 
-        """
-
-        start = protein_sequence.find(peptide_sequence)
-        if start == -1:
-            logger.warning(f"Peptide sequence '{peptide_sequence}' not found in protein sequence '{protein_sequence}'.")
-        
-        end = start + len(peptide_sequence) - 1
-        return (start + 1, end + 1)
-
-    def calculate_count_sum(self, protein_sequence:str, peptides: pd.DataFrame, aggregation_method:AggregationMethod) -> pd.DataFrame:
-        """
-        Calculate the count and sum of intensities of peptites along protein.
-        Returns a tuple of count and intensity.
-        """
-        grouped_peptides: pd.DataFrame
-        if aggregation_method == AggregationMethod.SUM:
-            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE])[PeptideDF.INTENSITY].sum().reset_index()
-        elif aggregation_method == AggregationMethod.MEDIAN:
-            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE])[PeptideDF.INTENSITY].median().reset_index()
-        elif aggregation_method == AggregationMethod.MEAN:
-            grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE])[PeptideDF.INTENSITY].mean().reset_index()
-        else:
-            raise ValueError(f"Unknown group method: {aggregation_method}")
-
-        proteinlength = len(protein_sequence)
-        count = [0] * proteinlength
-        intensity = [0] * proteinlength
-
-        for _, peptide in grouped_peptides.iterrows():
-            start, end = self.find_peptide_position(protein_sequence, peptide[PeptideDF.SEQUENCE])
-
-            for i in range(start-1, end):
-                count[i] += 1
-                if not math.isnan(peptide[PeptideDF.INTENSITY]):
-                    intensity[i] += int(peptide[PeptideDF.INTENSITY])
-
-        return count, intensity
-
-    @data_needed
     def getProteinSequence(self, protein_id: str) -> str:
         """
         Get the amino acid sequence of a protein by its ID.
@@ -209,11 +61,10 @@ class CleavageEnrichment:
             raise ValueError(f"Multiple entries found for Protein ID {protein_id} in FASTA data. Please ensure unique protein IDs. Entries: {ids.tolist()}")
         return fasatadata.iloc[0][FastaDF.SEQUENCE]
 
-    @data_needed
     def protein_plot_data(
         self,
         proteins:list[str],
-        aggregation_method:AggregationMethod,
+        aggregation_method: AggregationMethod,
         group_by:GroupBy = GroupBy.PROTEIN,
         metadatafilter: dict[str, list] = {},
         colored_metadata: str = None
@@ -233,8 +84,7 @@ class CleavageEnrichment:
         ]
         """
 
-        peptides : pd.DataFrame = self.peptidedata[self.peptidedata["Protein ID"].isin(proteins)]
-
+        peptides: pd.DataFrame = self.peptides[self.peptides["Protein ID"].isin(proteins)]
         metadata: pd.DataFrame = self.metadata
 
         usesFilters = False
@@ -263,7 +113,7 @@ class CleavageEnrichment:
             grouped = sample_peptides.groupby(group_by)
 
             for group_name, group_df in grouped:
-                count, intensity = self.calculate_count_sum(protein_sequence,peptides=group_df,aggregation_method=aggregation_method)
+                count, intensity = calculate_count_sum(protein_sequence,peptides=group_df,aggregation_method=aggregation_method)
 
                 entry = {
                     OutpuKeys.LABEL: f"{group_name}",

@@ -7,6 +7,7 @@ import { Form } from "./components/Form";
 import { FormData, PlotStyle } from "./components/Form/Form.props";
 import { BackendPlot } from "./components/BackendPlot";
 import { LoadingSpinner } from "./components/LoadingSpinner";
+import { UploadForm } from "./components/UploadForm/UploadForm";
 
 export const PlotType = {
   HEATMAP: "heatmap",
@@ -80,6 +81,8 @@ function App() {
     <div className="w-full flex flex-col lg:flex-row lg:h-screen">
       {/* <!-- Sidebar/Form --> */}
       <div className="w-full lg:w-1/4 p-6 lg:overflow-y-auto overflow-visible">
+        <h1 className="text-2xl font-bold mb-4">Cleavage Enrichment</h1>
+        <UploadForm />
         <Form
           onChange={handleFormChange}
           onStyleChange={(style) => {

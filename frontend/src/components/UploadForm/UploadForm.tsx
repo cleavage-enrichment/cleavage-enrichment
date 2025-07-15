@@ -72,7 +72,7 @@ export const UploadForm: React.FC = () => {
       <label className={inputLabelClass}>Peptide File</label>
       <div className={fileInputContainerClass}>
         <label className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded cursor-pointer transition">
-          Upload
+          Choose
           <input
             id="peptide-upload"
             type="file"
@@ -90,7 +90,7 @@ export const UploadForm: React.FC = () => {
       <label className={inputLabelClass}>Metadata File</label>
       <div className={fileInputContainerClass}>
         <label className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded cursor-pointer transition">
-          Upload
+          Choose
           <input
             id="meta-upload"
             type="file"
@@ -108,7 +108,7 @@ export const UploadForm: React.FC = () => {
       <label className={inputLabelClass}>Fasta File</label>
       <div className={fileInputContainerClass}>
         <label className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded cursor-pointer transition">
-          Upload
+          Choose
           <input
             id="fasta-upload"
             type="file"

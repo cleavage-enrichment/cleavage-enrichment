@@ -22,7 +22,7 @@ def calculate_ticks(data: list, is_log_scale=True, tickcount=4):
     flat_z = np.array(data).flatten()
     min_val = 0
     max_val = np.max(flat_z, initial=0)
-    
+
     if is_log_scale:
         max_val = log(max_val)
 
@@ -38,7 +38,7 @@ def calculate_ticks(data: list, is_log_scale=True, tickcount=4):
         else:
             tickvals.append(i)
             ticktext.append(scientific_notation(i))
-        
+
     return tickvals, ticktext
 
 def create_dendrogram(data_matrix: pd.DataFrame):
@@ -51,6 +51,9 @@ def create_dendrogram(data_matrix: pd.DataFrame):
         fig (go.Figure): A Plotly figure object containing the dendrogram.
     """
     fig = ff.create_dendrogram(data_matrix.values, orientation='right')
+    for trace in fig['data']:
+        trace['line']['color'] = '#2B3F5F'
+
     for i in range(len(fig['data'])):
         fig['data'][i]['xaxis'] = 'x2'
 
@@ -151,10 +154,14 @@ def create_heatmap_figure(
         index=[s["label"] for s in samples]
     )
 
+    heatmap_height = max(400, 150 + len(samples) * 20)
+    colorbar_height = 400
+    colorbar_factor = colorbar_height / heatmap_height
+
     if dendrogram and len(samples) <= 1:
         logger.warning("Dendrogram needs at least two samples to be created. Skipping dendrogram.")
         dendrogram = False
-    
+
     if color_groups is not None and len(color_groups) != len(df):
         logger.warning("Color groups do not match the number of samples. Skipping color groups.")
         color_groups = None
@@ -164,17 +171,10 @@ def create_heatmap_figure(
 
     if dendrogram:
         # Create Dendrogram
-        fig = ff.create_dendrogram(df.values, orientation='right')
-        for i in range(len(fig['data'])):
-            fig['data'][i]['xaxis'] = 'x2'
-        
-        ## Reordering of rows
-        dendro_leaves = fig['layout']['yaxis']['ticktext']
-        dendro_leaves = list(map(int, dendro_leaves))
-        df = df.iloc[dendro_leaves,:]
+        fig, df = create_dendrogram(df)
 
         if color_groups is not None:
-            color_groups = color_groups.iloc[dendro_leaves,:]
+            color_groups = color_groups.loc[df.index,:]
 
     if use_log_scale:
         loged_df = df.map(log)
@@ -184,7 +184,7 @@ def create_heatmap_figure(
     x = list(range(1, max_length + 1))
 
     customdata = df.map(lambda x: scientific_notation(x,3)).values
-    
+
     tickvals, ticktext = calculate_ticks(df.values, use_log_scale)
 
     heatmap = go.Heatmap(
@@ -199,6 +199,9 @@ def create_heatmap_figure(
             tickmode = "array",
             tickvals = tickvals,
             ticktext = ticktext,
+            len = colorbar_factor,
+            y = 1,
+            yanchor='top',
         ),
     )
 
@@ -221,7 +224,7 @@ def create_heatmap_figure(
             range = [0, df.shape[0]*10],
           )
       )
-    
+
     else:
       fig = go.Figure(data=[heatmap])
       fig.update_layout(
@@ -229,7 +232,7 @@ def create_heatmap_figure(
             domain = [0, 0.9 if color_groups is not None else 1],
           )
       )
-    
+
     if color_groups is not None:
         group_heatmap = create_group_heatmap(color_groups)
         if dendrogram:
@@ -240,7 +243,7 @@ def create_heatmap_figure(
                 domain = [.95, 1],
             ),
         )
-    
+
     fig.update_layout(
         plot_bgcolor='rgba(255,255,255,255)',
         paper_bgcolor='rgba(255,255,255,255)',

@@ -247,7 +247,10 @@ def create_heatmap_figure(
     fig.update_layout(
         plot_bgcolor='rgba(255,255,255,255)',
         paper_bgcolor='rgba(255,255,255,255)',
-        title=name,
+        title = dict(
+            text = name,
+            x = 0.5,
+        ),
         xaxis=dict(
           range = [0.5, max_length+0.5],
           title = xlabel,

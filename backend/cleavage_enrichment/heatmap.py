@@ -53,6 +53,7 @@ def create_dendrogram(data_matrix: pd.DataFrame):
     fig = ff.create_dendrogram(data_matrix.values, orientation='right')
     for trace in fig['data']:
         trace['line']['color'] = '#2B3F5F'
+        trace['showlegend'] = False
 
     for i in range(len(fig['data'])):
         fig['data'][i]['xaxis'] = 'x2'
@@ -65,7 +66,8 @@ def create_dendrogram(data_matrix: pd.DataFrame):
 
     return fig, data_matrix
 
-def create_group_heatmap(groups: pd.DataFrame):
+
+def create_group_heatmap(fig, groups: pd.DataFrame, legend_y_offset = 0):
     """
     Create a heatmap for groups using Plotly.
     Args:
@@ -98,12 +100,38 @@ def create_group_heatmap(groups: pd.DataFrame):
         z=group_vals.values,
         x=groups.columns,
         showscale=False,
-        colorscale=[[i / (len(val_to_color)-1) if len(val_to_color) > 1 else 0, c] for i, c in enumerate(val_to_color.values())],
+        colorscale=[[0,color_palette[0]],[1,color_palette[0]]] if len(val_to_color) == 1 else [[i / (len(val_to_color)-1)] for i, c in enumerate(val_to_color.values())],
         text=group_text.values,
         hovertemplate="%{text}<extra></extra>",
         xaxis='x3',
         yaxis='y'
     )
+
+    colors = group_to_color.values()
+    labels = group_to_color.keys()
+
+    for color, label in zip(colors, labels):
+        fig.add_trace(go.Scatter(
+            x=[None], y=[None],
+            mode='markers',
+            marker=dict(size=10, color=color),
+            name=label,
+            showlegend=True
+        ))
+
+    fig.update_layout(
+      legend_title_text = groups.columns[0],
+      legend=dict(
+          x = 1.04,
+          y = 1-legend_y_offset,
+          yanchor = 'top',
+          traceorder = 'normal',
+      ),
+      showlegend= True,
+    )
+
+
+
 
     return group_heatmap
 
@@ -162,9 +190,14 @@ def create_heatmap_figure(
         logger.warning("Dendrogram needs at least two samples to be created. Skipping dendrogram.")
         dendrogram = False
 
+    #TODO: put inot color grups function; look if set_index is needed
     if color_groups is not None and len(color_groups) != len(df):
         logger.warning("Color groups do not match the number of samples. Skipping color groups.")
         color_groups = None
+    elif color_groups is not None:
+      # Align the index of color_groups with the index of df
+      color_groups = color_groups.set_index(df.index)
+
 
     if logarithmize_data:
         df = df.map(log)
@@ -200,6 +233,7 @@ def create_heatmap_figure(
             tickvals = tickvals,
             ticktext = ticktext,
             len = colorbar_factor,
+            x = 1.04,
             y = 1,
             yanchor='top',
         ),
@@ -234,7 +268,7 @@ def create_heatmap_figure(
       )
 
     if color_groups is not None:
-        group_heatmap = create_group_heatmap(color_groups)
+        group_heatmap = create_group_heatmap(fig, color_groups, colorbar_factor)
         if dendrogram:
             group_heatmap.y = list(np.arange(5, color_groups.shape[0]*10, 10))
         fig.add_trace(group_heatmap)
@@ -247,10 +281,8 @@ def create_heatmap_figure(
     fig.update_layout(
         plot_bgcolor='rgba(255,255,255,255)',
         paper_bgcolor='rgba(255,255,255,255)',
-        title = dict(
-            text = name,
-            x = 0.5,
-        ),
+        title=name,
+        title_x=0.5,
         xaxis=dict(
           range = [0.5, max_length+0.5],
           title = xlabel,
@@ -261,6 +293,7 @@ def create_heatmap_figure(
         ),
         width = 800,
         height = max(400, 150 + len(samples) * 20),
-        margin = dict(l=200),
+        margin = dict(l=200,r=200),
     )
+
     return fig

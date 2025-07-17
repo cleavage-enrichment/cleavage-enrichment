@@ -100,7 +100,7 @@ def create_group_heatmap(fig, groups: pd.DataFrame, legend_y_offset = 0):
         z=group_vals.values,
         x=groups.columns,
         showscale=False,
-        colorscale=[[0,color_palette[0]],[1,color_palette[0]]] if len(val_to_color) == 1 else [[i / (len(val_to_color)-1)] for i, c in enumerate(val_to_color.values())],
+        colorscale=[[0,color_palette[0]],[1,color_palette[0]]] if len(val_to_color) == 1 else [[i / (len(val_to_color)-1), c] for i, c in enumerate(val_to_color.values())],
         text=group_text.values,
         hovertemplate="%{text}<extra></extra>",
         xaxis='x3',
@@ -195,8 +195,7 @@ def create_heatmap_figure(
         logger.warning("Color groups do not match the number of samples. Skipping color groups.")
         color_groups = None
     elif color_groups is not None:
-      # Align the index of color_groups with the index of df
-      color_groups = color_groups.set_index(df.index)
+        color_groups = color_groups.set_index(df.index)
 
 
     if logarithmize_data:

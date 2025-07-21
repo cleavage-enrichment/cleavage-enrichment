@@ -3,6 +3,7 @@ from typing import IO
 
 import pandas as pd
 
+from .barplot import create_bar_figure, BarplotData
 from .constants import AggregationMethod, FastaDF, GroupBy, Meta, OutpuKeys, PeptideDF
 from .heatmap import create_heatmap_figure
 from .io_utils import read_fasta_file, read_metadata_file, read_peptide_file
@@ -385,8 +386,21 @@ class CleavageEnrichment:
                 use_log_scale=use_log_scale,
             )
             return fig
-        # elif plottype == self.PlotType.BARPLOT:
-        #     return self.barplot_data(**formData)
+        elif plottype == self.PlotType.BARPLOT:
+            use_log_scale_y_pos = formData.pop("useLogScaleYPos", True)
+            use_log_scale_y_neg = formData.pop("useLogScaleYNeg", True)
+            logarithmize_data_pos = formData.pop("logarithmizeDataPos", False)
+            logarithmize_data_neg = formData.pop("logarithmizeDataNeg", False)
+
+            data = self.barplot_data(**formData)
+            barplotdata = BarplotData(**data["plot_data"])
+
+            fig = create_bar_figure(barplotdata,
+                                       use_log_scale_y_pos=use_log_scale_y_pos,
+                                       use_log_scale_y_neg=use_log_scale_y_neg,
+                                       logarithmize_data_pos=logarithmize_data_pos,
+                                       logarithmize_data_neg=logarithmize_data_neg)
+            return fig
         else:
             logger.error(f"Unknown plot type: {plottype}")
             return []

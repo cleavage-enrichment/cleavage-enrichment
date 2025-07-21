@@ -35,9 +35,8 @@ function App() {
   }, [plotStyle]);
 
   const handleFormChange = (formData) => {
-    setIsLoading(true);
     if (formData) {
-      if (formData.plot_type == PlotType.BARPLOT) {
+      if (false && formData.plot_type == PlotType.BARPLOT) {
         setPlotJson(null); // Clear previous plot JSON
         fetch(`/api/getplotdata`, {
           method: "POST",
@@ -53,8 +52,9 @@ function App() {
           .finally(() => {
             setIsLoading(false);
           });
-      } else if (formData.plot_type == PlotType.HEATMAP) {
+      } else if (true || formData.plot_type == PlotType.HEATMAP) {
         setData(null); // Clear previous barplot data
+        setIsLoading(true);
         fetch(`/api/plot`, {
           method: "POST",
           headers: {

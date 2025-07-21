@@ -462,9 +462,9 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             control={
               <Checkbox
                 id="logarithmizeDataPos"
-                checked={style.logarithmizeDataPos}
+                checked={formData.logarithmizeDataPos}
                 onChange={(e) => {
-                  setStyle((prev) => ({
+                  setFormData((prev) => ({
                     ...prev,
                     logarithmizeDataPos: e.target.checked,
                   }));
@@ -479,9 +479,9 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             control={
               <Checkbox
                 id="logarithmizeDataNeg"
-                checked={style.logarithmizeDataNeg}
+                checked={formData.logarithmizeDataNeg}
                 onChange={(e) => {
-                  setStyle((prev) => ({
+                  setFormData((prev) => ({
                     ...prev,
                     logarithmizeDataNeg: e.target.checked,
                   }));
@@ -496,9 +496,9 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             control={
               <Checkbox
                 id="useLogScaleYPos"
-                checked={style.useLogScaleYPos}
+                checked={formData.useLogScaleYPos}
                 onChange={(e) => {
-                  setStyle((prev) => ({
+                  setFormData((prev) => ({
                     ...prev,
                     useLogScaleYPos: e.target.checked,
                   }));
@@ -513,9 +513,9 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
             control={
               <Checkbox
                 id="useLogScaleYNeg"
-                checked={style.useLogScaleYNeg}
+                checked={formData.useLogScaleYNeg}
                 onChange={(e) => {
-                  setStyle((prev) => ({
+                  setFormData((prev) => ({
                     ...prev,
                     useLogScaleYNeg: e.target.checked,
                   }));

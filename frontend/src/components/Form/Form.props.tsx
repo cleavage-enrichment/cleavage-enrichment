@@ -19,6 +19,11 @@ export type FormData = {
   logarithmizeData?: boolean;
   dendrogram?: boolean;
   colored_metadata?: Option;
+
+  useLogScaleYPos?: boolean;
+  useLogScaleYNeg?: boolean;
+  logarithmizeDataPos?: boolean;
+  logarithmizeDataNeg?: boolean;
 };
 
 export type PlotStyle = {

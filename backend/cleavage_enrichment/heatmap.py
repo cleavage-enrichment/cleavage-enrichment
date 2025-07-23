@@ -129,11 +129,8 @@ def create_group_heatmap(fig, groups: pd.DataFrame, legend_y_offset = 0):
       ),
       showlegend= True,
     )
-
-
-
-
     return group_heatmap
+
 
 def create_heatmap_figure(
     samples: dict,
@@ -182,9 +179,11 @@ def create_heatmap_figure(
         index=[s["label"] for s in samples]
     )
 
-    heatmap_height = max(400, 150 + len(samples) * 20)
-    colorbar_height = 400
-    colorbar_factor = colorbar_height / heatmap_height
+    margin_height = 180
+    height_per_row = 20
+    heatmap_height = max(margin_height+250, margin_height + len(samples) * height_per_row)
+    colorbar_height = 200
+    colorbar_factor = colorbar_height / (heatmap_height-margin_height)
 
     if dendrogram and len(samples) <= 1:
         logger.warning("Dendrogram needs at least two samples to be created. Skipping dendrogram.")

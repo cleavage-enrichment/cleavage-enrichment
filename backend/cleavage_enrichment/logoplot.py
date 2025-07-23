@@ -64,14 +64,14 @@ def logo_plot(df, title = "", colors=DEFAULT_COLORS):
 
     # Save figure to in-memory buffer
     buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight')
+    plt.savefig(buf, format='svg', bbox_inches='tight')
     buf.seek(0)
 
     # Encode to base64
-    base64_png = base64.b64encode(buf.read()).decode('utf-8')
+    base64_svg = base64.b64encode(buf.read()).decode('utf-8')
     buf.close()
 
     # Create data URI
-    data_uri = f"data:image/png;base64,{base64_png}"
+    data_uri = f"data:image/svg+xml;base64,{base64_svg}"
 
     return data_uri

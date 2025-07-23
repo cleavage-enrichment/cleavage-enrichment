@@ -49,46 +49,103 @@ def create_bar_figure(
     cleavages: pd.DataFrame = #None,
     pd.DataFrame({
         "position": [1, 20, 30, 400, 501],
-        "name": ["Motif 1", "Motif 2", "Motif 3", "Motif 4", "Motif 1"]
+        "name": ["Trypsin", "Lys-C", "Lys-C", "Trypsin", "Trypsin"]
     }),
+    motifs: list[pd.DataFrame] = #None,
+    [
+        pd.DataFrame([
+            {'A': 0.0, 'G': 0.0, 'L': 0.0, 'K': 0.4, 'R': 0.4, 'H': 0.2},
+            {'A': 0.5, 'G': 0.3, 'L': 0.2, 'K': 0.0, 'R': 0.0, 'H': 0.0}
+        ], index=[-1, 1]),
+        pd.DataFrame([
+            {'A': 0.0, 'G': 0.0, 'L': 0.0, 'K': 0.8, 'R': 0.1, 'H': 0.1},
+            {'A': 0.4, 'G': 0.4, 'L': 0.2, 'K': 0.0, 'R': 0.0, 'H': 0.0}
+        ], index=[-1, 1])
+    ],
+    motif_names: list[str] = #None,
+    ["Trypsin", "Lys-C"],
+    motif_probabilities: list[float] = [0.5,0.2],
+    
     title: str = "Cleavage Analysis",
-    ylabel: str = "Amino acid position",
+    xlabel: str = "Amino acid position",
+    colors: list[str] = ["#4A536A", "#CE5A5A"],
     use_log_scale_y_pos: bool = False,
     use_log_scale_y_neg: bool = False,
     logarithmize_data_pos: bool = False,
     logarithmize_data_neg: bool = False,
-    bar_colors: list[str] = ["#4A536A", "#CE5A5A"],
-    motifs: list[pd.DataFrame] = #None,
-    [pd.DataFrame([
-            {'A': 0.6, 'G': 0.4, 'L': 0, 'V': 0, 'K': 0, 'R': 0, 'H': 0},
-            {'A': 0, 'G': 0, 'L': 0.8, 'V': 0.2, 'K': 0, 'R': 0, 'H': 0},
-            {'A': 0, 'G': 0, 'L': 0, 'V': 0, 'K': 0.5, 'R': 0.3, 'H': 0.2},
-            {'A': 0, 'G': 0, 'L': 0.8, 'V': 0.2, 'K': 0, 'R': 0, 'H': 0},
-            {'A': 0, 'G': 0, 'L': 0, 'V': 0, 'K': 0.5, 'R': 0.3, 'H': 0.2}
-        ], index=[-2, -1, 0, 1, 2])]*4,
-    motif_titles: list[str] = #None,
-    ["Motif 1", "Motif 2", "Motif 3", "Motif 4"],
 ) -> go.Figure:
     """
-    Create a Plot to visualize the Peptide Intensity, Count over the Protein Sequence and visualize cleavages.
+    Create a Plot to visualize the Peptide Intensity, Count and cleavages over a Protein.
 
-    Parameters
-    ----------
-    barplot_data : BarplotData
-        Input data structure (samples + metadata).
-    cleavages : pd.DataFrame, optional
-        Cleavage data to be displayed as a heatmap.
-        1. col: 
-    use_log_scale_y_pos, use_log_scale_y_neg : bool, default False
-        Whether to *display* the y‑axis on a log scale (positive / negative side).
-    logarithmize_data_pos, logarithmize_data_neg : bool, default False
-        Whether to *transform the numeric values* with log before plotting.
+    Args:
+        barplot_data (BarplotData): Input data structure (samples + metadata).
+        cleavages (pd.DataFrame, optional): Cleavages to be shown in the plot.
+
+            DataFrame with columns 'position' and 'name'.
+            Number of positions must match the number of names.
+            The Names must match the names in 'motif_names'.
+
+            Example:
+            pd.DataFrame({
+                "position": [1, 20, 30, 400, 501],
+                "name": ["Trypsin", "Lys-C", "Lys-C", "Trypsin", "Trypsin"]
+            })
+        motifs (list[pd.DataFrame], optional): List of DataFrames with amino acid frequencies for up to 4 logo plots.
+            Each DataFrame should have amino acids as columns and positions as index.
+
+            Example:
+            [
+                pd.DataFrame([
+                    {'A': 0.0, 'G': 0.0, 'L': 0.0, 'K': 0.4, 'R': 0.4, 'H': 0.2},
+                    {'A': 0.5, 'G': 0.3, 'L': 0.2, 'K': 0.0, 'R': 0.0, 'H': 0.0}
+                ], index=[-1, 1]),
+                pd.DataFrame([
+                    {'A': 0.0, 'G': 0.0, 'L': 0.0, 'K': 0.8, 'R': 0.1, 'H': 0.1},
+                    {'A': 0.4, 'G': 0.4, 'L': 0.2, 'K': 0.0, 'R': 0.0, 'H': 0.0}
+                ], index=[-1, 1])
+            ]
+        motif_names (list[str], optional): List of names for the motifs.
+            Must match the number of motifs.
+            Must match the names in 'cleavages'.
+            Example: ["Trypsin", "Lys-C"]
+        motif_probabilities (list[float], optional): List of probabilities for the motifs.
+            Must match the number of motifs.
+            Example: [0.5, 0.2]
+        title (str, default "Cleavage Analysis"): Title of the plot.
+        xlabel (str, default "Amino acid position"): Label for the x-axis.
+        colors (list[str], default ["#4A536A", "#CE5A5A"]): List of colors for the bar plots.
+            First color is for positive values, second for negative values.
+            Accepted color formats for Plotly:
+            - Named CSS Colors:
+                Examples: "red", "blue", "green", "lightgray", etc.
+            - Hex Codes:
+                Examples: "#FF5733", "#4CAF50", etc.
+            - RGB/RGBA Strings:
+                Examples:
+                    "rgb(255, 0, 0)"
+                    "rgba(255, 0, 0, 0.5)"
+            - HSL/HSLA Strings:
+                Examples:
+                    "hsl(360, 100%, 50%)"
+                    "hsla(360, 100%, 50%, 0.3)"
+        use_log_scale_y_pos (bool, default False):
+            Whether to display the positive y‑axis on a log scale.
+        use_log_scale_y_neg (bool, default False):
+            Whether to display the negative y‑axis on a log scale.
+        logarithmize_data_pos (bool, default False):
+            Whether to transform the numeric values on the positive y axis with log before plotting.
+        logarithmize_data_neg (bool, default False):
+            Whether to transform the numeric values on the negative y axis with log before plotting.
+
+    Returns:
+        go.Figure: A Plotly figure object containing the bar plot and optional cleavage lines with
+            motif logo plots.
     """
     # ------------------------------------------------------------------ guard
     if not barplot_data.samples:
         raise ValueError("Please provide at least one sample – nothing to plot.")
 
-    if motifs and motif_titles and len(motifs) != len(motif_titles):
+    if motifs and motif_names and len(motifs) != len(motif_names):
         raise ValueError("The number of motifs must match the number of motif titles.")
 
     # ------------------------------------------------------------------ prep
@@ -178,8 +235,11 @@ def create_bar_figure(
     # ------------------------------------------------------------------ logo plots
     if motifs is not None:
         for i in range(len(motifs)):
-            motive_title = motif_titles[i] if motif_titles is not None else f""
-            logo = logo_plot(motifs[i],title=motive_title)
+            motif_title = motif_names[i] if motif_names is not None else f""
+            if motif_probabilities is not None:
+                motif_title += f" (p={motif_probabilities[i]:.2f})"
+            
+            logo = logo_plot(motifs[i],title=motif_title)
             fig.add_layout_image(
                 dict(
                     source=logo,
@@ -219,7 +279,7 @@ def create_bar_figure(
                 y=disp.data_pos,
                 name=barplot_data.legend_pos,
                 showlegend=True if i == 1 else False,
-                marker_color=bar_colors[0],
+                marker_color=colors[0],
                 customdata=[format_label(v) for v in orig.data_pos],
                 hovertemplate=barplot_data.legend_pos + ": %{customdata}<extra>Position: %{x}</extra>",
                 marker_line_width = 0,
@@ -235,7 +295,7 @@ def create_bar_figure(
                 y=[v * factor_y_neg for v in disp.data_neg],
                 name=barplot_data.legend_neg if i == 1 else None,
                 showlegend=True if i == 1 else False,
-                marker_color=bar_colors[1],
+                marker_color=colors[1],
                 customdata=[format_label(v) for v in orig.data_neg],
                 hovertemplate=barplot_data.legend_neg + ": %{customdata}<extra>Position: %{x}</extra>",
                 marker_line_width = 0,
@@ -304,7 +364,7 @@ def create_bar_figure(
 
         # Add the cleavage names as annotations
         for _, row in cleavages.iterrows():
-            plotpos = motif_titles.index(row['name'])
+            plotpos = motif_names.index(row['name'])
 
             # diagonal mapping lines from barplots to logo plots
             fig.add_shape(
@@ -346,7 +406,7 @@ def create_bar_figure(
         margin=dict(l=150),
     )
     fig.update_xaxes(
-        title_text=ylabel,
+        title_text=xlabel,
         row=rows + barplot_offset,
         col=1,
         ticks="outside",
@@ -406,11 +466,11 @@ if __name__ == "__main__":
 
         cleavages=cleavages,
         motifs=motifs,
-        motif_titles=motif_titles,
+        motif_names=motif_titles,
 
         title="Example Title",
-        ylabel="Amino acid position",
-        bar_colors=bar_colors,
+        xlabel="Amino acid position",
+        colors=bar_colors,
 
         use_log_scale_y_pos=True,
         use_log_scale_y_neg=True,

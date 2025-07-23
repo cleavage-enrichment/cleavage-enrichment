@@ -35,6 +35,7 @@ DEFAULT_COLORS = {
 def logo_plot(df, title = "", colors=DEFAULT_COLORS):
     """
     Create a logo plot from a DataFrame with logomaker.
+
     Args:
         df (pd.DataFrame): DataFrame with amino acid frequencies.
             Columns should be amino acids, index should be positions.
@@ -47,9 +48,7 @@ def logo_plot(df, title = "", colors=DEFAULT_COLORS):
                 {'A': 0, 'G': 0, 'L': 0.8, 'V': 0.2, 'K': 0, 'R': 0, 'H': 0},
                 {'A': 0, 'G': 0, 'L': 0, 'V': 0, 'K': 0.5, 'R': 0.3, 'H': 0.2}
             ], index=[-2, -1, 0, 1, 2])
-        
         title (str): Title for the logo plot.
-
         colors (dict or ): Specification of logo colors. 
             Can take several forms: For protein, built-in schemes include ‘hydrophobicity’, ‘chemistry’, or ‘charge’. Can also be a matplotlib color name like ‘k’ or ‘tomato’, an RGB array with 3 floats in [0,1], or a dictionary mapping characters to colors like {‘A’: ‘blue’, ‘C’: ‘yellow’, ‘G’: ‘green’, ‘T’: ‘red’}.
     

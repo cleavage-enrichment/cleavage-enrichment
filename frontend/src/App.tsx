@@ -36,40 +36,22 @@ function App() {
 
   const handleFormChange = (formData) => {
     if (formData) {
-      if (false && formData.plot_type == PlotType.BARPLOT) {
-        setPlotJson(null); // Clear previous plot JSON
-        fetch(`/api/getplotdata`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
+      setData(null);
+      setIsLoading(true);
+      fetch(`/api/plot`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setPlotJson(data["plot"] || []);
         })
-          .then((res) => res.json())
-          .then((data) => {
-            setData(data["data"] || []);
-          })
-          .finally(() => {
-            setIsLoading(false);
-          });
-      } else if (true || formData.plot_type == PlotType.HEATMAP) {
-        setData(null); // Clear previous barplot data
-        setIsLoading(true);
-        fetch(`/api/plot`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            setPlotJson(data["plot"] || []);
-          })
-          .finally(() => {
-            setIsLoading(false);
-          });
-      }
+        .finally(() => {
+          setIsLoading(false);
+        });
     } else {
       setData(null);
       setPlotJson(null);

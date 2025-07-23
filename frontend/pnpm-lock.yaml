@@ -26,6 +26,9 @@ importers:
       plotly.js:
         specifier: ^3.0.1
         version: 3.0.1(mapbox-gl@1.13.3)(webpack@5.99.9)
+      plotly.js-dist-min:
+        specifier: ^3.0.2
+        version: 3.0.2
       react:
         specifier: ^19.1.0
         version: 19.1.0
@@ -2363,6 +2366,9 @@ packages:
     resolution: {integrity: sha512-eG2dWTVw5bzqGRztnHExczNxt5VGsE6OwTeCG3fdUf9KBsZzO3R5OIIIzWR+iZA0NtZ+RDVdaoE2dK1cn6jH4g==}
     engines: {node: '>=0.10'}
     hasBin: true
+
+  plotly.js-dist-min@3.0.2:
+    resolution: {integrity: sha512-HB3iE3grHK+JGlAdbABs3TP75OHP1VoMbFdUxrhlz0p3hK0qRqApxdmMpeS4us19Xfm4krNoc3HTFrWQqRuvKQ==}
 
   plotly.js@3.0.1:
     resolution: {integrity: sha512-eWEUkqdv4sblmUQJ7xGlEA+LghzEVPJOlPBZMJuagG0CsQxlmBb+7rd0UFVig5jhRnN8PQqRQaLv6qXIjnvzgg==}
@@ -5295,6 +5301,8 @@ snapshots:
   picomatch@4.0.2: {}
 
   pidtree@0.6.0: {}
+
+  plotly.js-dist-min@3.0.2: {}
 
   plotly.js@3.0.1(mapbox-gl@1.13.3)(webpack@5.99.9):
     dependencies:

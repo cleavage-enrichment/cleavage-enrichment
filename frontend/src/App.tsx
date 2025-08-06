@@ -1,9 +1,6 @@
 import React from "react";
 import "./App.css";
-import { BarplotData, BarPlot } from "./components/BarPlot";
-import { HeatmapData } from "./components/Heatmap";
 import { Form } from "./components/Form";
-import { PlotStyle } from "./components/Form/Form.props";
 import { BackendPlot } from "./components/BackendPlot";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { UploadForm } from "./components/UploadForm/UploadForm";
@@ -12,11 +9,6 @@ export const PlotType = {
   HEATMAP: "heatmap",
   BARPLOT: "barplot",
 } as const;
-
-type Data = {
-  plot_data: HeatmapData | BarplotData;
-  plot_type: (typeof PlotType)[keyof typeof PlotType]; // Type of the plot (heatmap or barplot)
-};
 
 function App() {
   const [plotJson, setPlotJson] = React.useState<string | null>(null);
@@ -46,25 +38,24 @@ function App() {
 
   return (
     <div className="w-full flex flex-col lg:flex-row lg:h-screen">
-      {/* Top Bar
-      <div className="fixed top-0 left-0 w-full z-50 bg-blue-700 text-white px-6 py-3 shadow flex items-center">
-        <span className="font-semibold text-lg tracking-wide">Cleavage Enrichment Dashboard</span>
-      </div> */}
+      {/* Top Bar */}
+      <div className="fixed top-0 left-0 w-full z-50 bg-gray-100 text-gray-800 px-6 py-3 shadow flex justify-center items-center">
+        <span className="font-semibold text-lg tracking-wide">
+          Cleavage Enrichment Dashboard
+        </span>
+      </div>
 
       {/* Main Content with padding to avoid overlap */}
-      <div className="flex flex-1 flex-col lg:flex-row w-full">
-        {" "}
-        {/* pt-16 */}
+      <div className="flex flex-1 flex-col pt-16 lg:flex-row w-full">
         {/* <!-- Form --> */}
-        <div className="w-full lg:w-1/4 p-6 lg:overflow-y-auto overflow-visible scrollbar-none hide-scrollbar">
+        <div className="w-full lg:w-1/3 p-6 lg:overflow-y-auto overflow-visible scrollbar-none hide-scrollbar">
           <UploadForm />
           <Form onChange={handleFormChange} />
         </div>
         {/* <!-- Plots --> */}
         {isLoading && <LoadingSpinner />}
         {!isLoading && (
-          <div className="w-full p-6 lg:overflow-y-auto">
-            <h2 className="text-xl font-semibold mb-4">Plots</h2>
+          <div className="w-full lg:overflow-y-auto">
             {plotJson && <BackendPlot plotJson={plotJson} />}
           </div>
         )}

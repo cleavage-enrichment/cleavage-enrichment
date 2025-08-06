@@ -51,7 +51,7 @@ export const BackendPlot: React.FC<BackendPlotProps> = ({ plotJson }) => {
   };
 
   return (
-    <div className="w-full h-full">
+    <div className="">
       <Plot
         ref={plotRef}
         className="w-full"

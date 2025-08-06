@@ -1,3 +1,7 @@
+test_outputs/
+
+######## below only default ########
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

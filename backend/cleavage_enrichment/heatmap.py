@@ -66,7 +66,7 @@ def create_dendrogram(data_matrix: pd.DataFrame):
     return fig, data_matrix
 
 
-def create_group_heatmap(fig, groups: pd.DataFrame, legend_y_offset = 0):
+def create_group_heatmap(fig, groups: pd.DataFrame, legend_y_offset = 0, color_palette=px.colors.qualitative.Dark2):
     """
     Create a heatmap for groups using Plotly.
     Args:
@@ -79,7 +79,6 @@ def create_group_heatmap(fig, groups: pd.DataFrame, legend_y_offset = 0):
 
     #color assignment
     unique_groups = groups.iloc[:,0].unique()
-    color_palette = px.colors.qualitative.Dark2
 
     if len(unique_groups) > len(color_palette):
         logger.warning(
@@ -146,6 +145,7 @@ def create_heatmap_figure(
     use_log_scale: bool = True,
     dendrogram: bool = False,
     color_groups: pd.DataFrame = None,
+    color_groups_palette: str = px.colors.qualitative.Dark2,
 ):
     """
     Create a heatmap figure using Plotly.
@@ -170,6 +170,8 @@ def create_heatmap_figure(
         use_log_scale (bool): Whether to use logarithmic scale for the zaxis/color bar.
         dendrogram (bool): Whether to cluster the rows and include a dendrogram in the heatmap.
         color_groups (pd.DataFrame): DataFrame containing groups for the samples. These groups will be displayed as a separate heatmap on the right side of the main heatmap.
+        color_groups_palette (str): Color palette to use for the groups heatmap.
+            Default is px.colors.qualitative.Dark2.
     Returns:
         go.Figure: A Plotly figure object containing the heatmap.
     """
@@ -273,7 +275,7 @@ def create_heatmap_figure(
       )
 
     if color_groups is not None:
-        group_heatmap = create_group_heatmap(fig, color_groups, colorbar_factor)
+        group_heatmap = create_group_heatmap(fig, color_groups, colorbar_factor, color_groups_palette)
         if dendrogram:
             group_heatmap.y = list(np.arange(5, color_groups.shape[0]*10, 10))
         fig.add_trace(group_heatmap)

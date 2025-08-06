@@ -146,7 +146,7 @@ def create_bar_figure(
         raise ValueError("Please provide at least one sample – nothing to plot.")
 
     if motifs and motif_names and len(motifs) != len(motif_names):
-        raise ValueError("The number of motifs must match the number of motif titles.")
+        raise ValueError("The number of motifs must match the number of motif names.")
 
     # ------------------------------------------------------------------ prep
     # constants for layout
@@ -234,9 +234,13 @@ def create_bar_figure(
 
     # ------------------------------------------------------------------ logo plots
     if motifs is not None:
-        for i in range(len(motifs)):
+        number_of_motifs = len(motifs)
+        motif_width = 1 / number_of_motifs
+        motif_positions = [motif_width/2 + i * motif_width for i in range(number_of_motifs)]
+
+        for i in range(number_of_motifs):
             motif_title = motif_names[i] if motif_names is not None else f""
-            if motif_probabilities is not None:
+            if motif_probabilities is not None and len(motif_probabilities) > i and motif_probabilities[i] is not None:
                 motif_title += f" (p={motif_probabilities[i]:.2f})"
             
             logo = logo_plot(motifs[i],title=motif_title)
@@ -245,9 +249,9 @@ def create_bar_figure(
                     source=logo,
                     xref="x domain",
                     yref="y domain",
-                    x=0.125 + 0.25*i,
+                    x=motif_positions[i],
                     y=0,
-                    sizex=0.25,
+                    sizex=motif_width,
                     sizey=1,
                     xanchor="center",
                     yanchor="bottom",
@@ -358,25 +362,14 @@ def create_bar_figure(
     fig.add_shape(type="line",x0=0,x1=0,y0=0,y1=0,xref="x",yref="y2 domain",line_width=0)
     fig.layout["yaxis2"].update(showticklabels=False)
 
-    if cleavages is not None:        
-        # dashtypes for different cleavage plots
-        dashtypes = ["dot", "dash", "dashdot",  "30, 10"]
+    # dashtypes for different cleavage plots
+    dashtypes = ["dot", "dash", "dashdot",  "30, 10"]
 
+    # vertical lines through barplots
+    if cleavages is not None:    
         # Add the cleavage names as annotations
         for _, row in cleavages.iterrows():
             plotpos = motif_names.index(row['name'])
-
-            # diagonal mapping lines from barplots to logo plots
-            fig.add_shape(
-                type="line",
-                x0=row['position'],
-                x1=(0.125 + 0.25 * plotpos) * max_x,
-                y0=0,
-                y1=1,
-                xref="x",
-                yref="y2 domain",
-                line=dict(color="black", dash=dashtypes[plotpos], width=1),
-            )
 
             # vertical lines through plots
             for i in range(1+barplot_offset, rows + barplot_offset + 1):
@@ -387,6 +380,23 @@ def create_bar_figure(
                     line_color="black",
                     row=i,
                     col=1,
+                )
+    
+    # diagonal mapping lines from barplots to logo plots
+    if cleavages is not None and motifs is not None:
+        for _, row in cleavages.iterrows():
+            plotpos = motif_names.index(row['name'])
+
+            if motifs is not None:
+                fig.add_shape(
+                    type="line",
+                    x0=row['position'],
+                    x1= motif_positions[plotpos] * max_x,
+                    y0=0,
+                    y1=1,
+                    xref="x",
+                    yref="y2 domain",
+                    line=dict(color="black", dash=dashtypes[plotpos], width=1),
                 )
 
 

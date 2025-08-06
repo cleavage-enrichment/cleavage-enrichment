@@ -19,24 +19,11 @@ type Data = {
 };
 
 function App() {
-  const [Data, setData] = React.useState<Data | null>();
-  // Load plotStyle from localStorage on first render
-  const [plotStyle, setPlotStyle] = React.useState<PlotStyle>(() => {
-    const saved = localStorage.getItem("plotStyle");
-    return saved ? JSON.parse(saved) : {};
-  });
-
   const [plotJson, setPlotJson] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
-  // Save plotStyle to localStorage whenever it changes
-  React.useEffect(() => {
-    localStorage.setItem("plotStyle", JSON.stringify(plotStyle));
-  }, [plotStyle]);
-
   const handleFormChange = (formData) => {
     if (formData) {
-      setData(null);
       setIsLoading(true);
       fetch(`/api/plot`, {
         method: "POST",
@@ -53,7 +40,6 @@ function App() {
           setIsLoading(false);
         });
     } else {
-      setData(null);
       setPlotJson(null);
     }
   };
@@ -72,26 +58,13 @@ function App() {
         {/* <!-- Form --> */}
         <div className="w-full lg:w-1/4 p-6 lg:overflow-y-auto overflow-visible scrollbar-none hide-scrollbar">
           <UploadForm />
-          <Form
-            onChange={handleFormChange}
-            onStyleChange={(style) => {
-              setPlotStyle(style);
-            }}
-          />
+          <Form onChange={handleFormChange} />
         </div>
         {/* <!-- Plots --> */}
         {isLoading && <LoadingSpinner />}
         {!isLoading && (
           <div className="w-full p-6 lg:overflow-y-auto">
             <h2 className="text-xl font-semibold mb-4">Plots</h2>
-            {Data && Data["plot_type"] === PlotType.BARPLOT && (
-              <div className="flex items-center justify-center">
-                <BarPlot
-                  barplotData={Data.plot_data as BarplotData}
-                  {...plotStyle}
-                />
-              </div>
-            )}
             {plotJson && <BackendPlot plotJson={plotJson} />}
           </div>
         )}

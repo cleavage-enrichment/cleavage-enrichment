@@ -5,22 +5,11 @@ import React, { useEffect } from "react";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 
-export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
+export const Form: React.FC<FormProps> = ({ onChange }) => {
   // Load from localStorage on first render
   const [formData, setFormData] = React.useState<FormData>(() => {
     const saved = localStorage.getItem("formData");
     return saved ? JSON.parse(saved) : {};
-  });
-  const [style, setStyle] = React.useState(() => {
-    const saved = localStorage.getItem("formStyle");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          useLogScaleYPos: false,
-          useLogScaleYNeg: false,
-          logarithmizeDataPos: false,
-          logarithmizeDataNeg: false,
-        };
   });
 
   // translates Options to value
@@ -54,20 +43,6 @@ export const Form: React.FC<FormProps> = ({ onChange, onStyleChange }) => {
     localStorage.setItem("formData", JSON.stringify(formData));
     onChange(flattenFormData(formData));
   }, [formData]);
-
-  // Save style to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("formStyle", JSON.stringify(style));
-    if (onStyleChange) {
-      onStyleChange(style);
-    }
-  }, [style]);
-
-  useEffect(() => {
-    if (onStyleChange) {
-      onStyleChange(style);
-    }
-  }, [style]);
 
   const loadProteinOptions = (inputValue, callback) => {
     fetch(`/api/getproteins?filter=${inputValue}&limit=6`)

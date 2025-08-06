@@ -81,6 +81,11 @@ def create_group_heatmap(fig, groups: pd.DataFrame, legend_y_offset = 0):
     unique_groups = groups.iloc[:,0].unique()
     color_palette = px.colors.qualitative.Dark2
 
+    if len(unique_groups) > len(color_palette):
+        logger.warning(
+            "More unique groups than colors in the color palette. Multiple groups will be assigned the same color."
+        )
+
     group_to_color = {
         group: color_palette[i % len(color_palette)]
         for i, group in enumerate(unique_groups)
@@ -177,6 +182,9 @@ def create_heatmap_figure(
         [s["data"] for s in samples],
         index=[s["label"] for s in samples]
     )
+
+    # Reverse the DataFrame to have the first sample at the top
+    df = df[::-1]
 
     margin_height = 180
     height_per_row = 20

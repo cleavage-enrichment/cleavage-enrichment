@@ -73,6 +73,8 @@ def create_bar_figure(
     use_log_scale_y_neg: bool = False,
     logarithmize_data_pos: bool = False,
     logarithmize_data_neg: bool = False,
+
+    plot_limit: bool = True,
 ) -> go.Figure:
     """
     Create a Plot to visualize the Peptide Intensity, Count and cleavages over a Protein.
@@ -136,6 +138,8 @@ def create_bar_figure(
             Whether to transform the numeric values on the positive y axis with log before plotting.
         logarithmize_data_neg (bool, default False):
             Whether to transform the numeric values on the negative y axis with log before plotting.
+        plot_limit (bool, default True):
+            Whether to limit the number of plots to 10.
 
     Returns:
         go.Figure: A Plotly figure object containing the bar plot and optional cleavage lines with
@@ -149,6 +153,12 @@ def create_bar_figure(
         raise ValueError("The number of motifs must match the number of motif names.")
 
     # ------------------------------------------------------------------ prep
+    if len(barplot_data.samples) > 10 and plot_limit:
+        logger.warning(
+            "More than 10 samples provided, to prevent performance issues only the first 10 will be plotted. You can turn off this feature in the settings."
+        )
+        barplot_data.samples = barplot_data.samples[:10]
+
     # constants for layout
     rows = len(barplot_data.samples)
 

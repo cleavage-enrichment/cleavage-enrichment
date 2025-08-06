@@ -24,6 +24,8 @@ export type FormData = {
   useLogScaleYNeg?: boolean;
   logarithmizeDataPos?: boolean;
   logarithmizeDataNeg?: boolean;
+
+  plot_limit?: boolean;
 };
 
 export type PlotStyle = {

@@ -499,6 +499,23 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
             }
             label="use log scale for negative y axis"
           />
+
+          <FormControlLabel
+            className="w-full"
+            control={
+              <Checkbox
+                id="plot_limit"
+                checked={formData.plot_limit ?? true}
+                onChange={(e) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    plot_limit: e.target.checked,
+                  }));
+                }}
+              />
+            }
+            label="Generate a maximum of 10 plots"
+          />
         </>
       )}
     </form>

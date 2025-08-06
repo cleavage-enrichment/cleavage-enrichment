@@ -377,7 +377,7 @@ class CleavageEnrichment:
 
         if plottype == self.PlotType.HEATMAP:
             logarithmize_data = formData.pop("logarithmizeData", False)
-            use_log_scale = formData.pop("useLogScale", True)
+            use_log_scale = formData.pop("useLogScale", False)
 
             data = self.heatmap_data(**formData)
             fig = create_heatmap_figure(
@@ -391,6 +391,7 @@ class CleavageEnrichment:
             use_log_scale_y_neg = formData.pop("useLogScaleYNeg", True)
             logarithmize_data_pos = formData.pop("logarithmizeDataPos", False)
             logarithmize_data_neg = formData.pop("logarithmizeDataNeg", False)
+            plot_limit = formData.pop("plot_limit", True)
 
             data = self.barplot_data(**formData)
             barplotdata = BarplotData(**data["plot_data"])
@@ -399,7 +400,9 @@ class CleavageEnrichment:
                                        use_log_scale_y_pos=use_log_scale_y_pos,
                                        use_log_scale_y_neg=use_log_scale_y_neg,
                                        logarithmize_data_pos=logarithmize_data_pos,
-                                       logarithmize_data_neg=logarithmize_data_neg)
+                                       logarithmize_data_neg=logarithmize_data_neg,
+                                       plot_limit=plot_limit
+                                   )
             return fig
         else:
             logger.error(f"Unknown plot type: {plottype}")

@@ -24,7 +24,7 @@ def index(request):
 cleavage_enrichment = CleavageEnrichment()
 
 @csrf_exempt
-def upload(request):
+def upload_view(request):
     """
     Handle file upload and process the data.
     """
@@ -55,11 +55,7 @@ def upload(request):
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
-def upload_progress(request, upload_id):
-    progress = cache.get(f"upload_progress_{upload_id}", 0)
-    return JsonResponse({"progress": progress})
-
-def getProteins(request):
+def proteins_view(request):
     """
     Search for proteins in the dataset based on a filter string.
     """
@@ -69,7 +65,7 @@ def getProteins(request):
         
     return JsonResponse({"proteins": proteins})
 
-def getMetadataGroups(request):
+def metadata_view(request):
     """
     Get metadata columns from the dataset.
     """
@@ -77,21 +73,6 @@ def getMetadataGroups(request):
     metadata_groups = cleavage_enrichment.get_metadata_groups()
     
     return JsonResponse({"metadata_groups": metadata_groups})
-
-@csrf_exempt
-def getPlotData(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Invalid request method"}, status=405)
-
-    try:
-        formData = json.loads(request.body)
-        print(f"Received formData: {formData}")
-    except Exception:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
-
-    return JsonResponse({
-        "data": cleavage_enrichment.get_plot_data(formData)
-    })
 
 @csrf_exempt
 def plot_view(request):

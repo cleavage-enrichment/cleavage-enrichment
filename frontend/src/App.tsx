@@ -108,7 +108,7 @@ function App() {
                 py: 2,
               }}
             >
-              <Typography variant="h6">Logs</Typography>
+              <Typography variant="h6">Settings</Typography>
               <UploadForm />
               <Form onChange={handleFormChange} />
             </Box>

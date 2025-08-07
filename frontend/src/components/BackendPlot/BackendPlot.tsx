@@ -20,6 +20,7 @@ const formats = [
 export const BackendPlot: React.FC<BackendPlotProps> = ({ plotJson }) => {
   const plotRef = useRef<Plotly.PlotlyHTMLElement | null>(null);
 
+  // State for download dialog
   const [dialogOpen, setDialogOpen] = useState(false);
   const [width, setWidth] = useState(800);
   const [height, setHeight] = useState(600);

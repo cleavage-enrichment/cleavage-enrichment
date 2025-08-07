@@ -1,4 +1,5 @@
 import json
+import logging
 import math
 import os
 import uuid
@@ -6,6 +7,8 @@ from django.http import FileResponse
 from django.shortcuts import render
 import pandas as pd
 import plotly.io as pio
+
+from utils.logging import InMemoryLogHandler
 
 from backend import settings
 from django.views.decorators.csrf import csrf_exempt
@@ -98,6 +101,14 @@ def plot_view(request):
     if request.method != "POST":
         return JsonResponse({"error": "Invalid request method"}, status=405)
     
+    logger = logging.getLogger()
+    log_handler = InMemoryLogHandler()
+    log_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(levelname)s: %(message)s')
+    log_handler.setFormatter(formatter)
+    logger.addHandler(log_handler)
+    logger.propagate = False
+
     try:
         formData = json.loads(request.body)
         print(f"Received formData: {formData}")
@@ -107,6 +118,12 @@ def plot_view(request):
     plot = cleavage_enrichment.get_plot(formData)
     plot_json = pio.to_json(plot)
 
-    return JsonResponse({
+    response = JsonResponse({
         "plot": plot_json,
+        "logs": log_handler.get_logs().splitlines()
     })
+
+    logger.removeHandler(log_handler)
+    log_handler.close()
+
+    return response

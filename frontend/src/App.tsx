@@ -3,10 +3,16 @@ import "./App.css";
 import { Form } from "./components/Form";
 import { BackendPlot } from "./components/BackendPlot";
 import { UploadForm } from "./components/UploadForm/UploadForm";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import CircularProgress from "@mui/material/CircularProgress";
-import Alert from "@mui/material/Alert";
+import {
+  Box,
+  Stack,
+  Typography,
+  Alert,
+  CircularProgress,
+  Grid,
+} from "@mui/material";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
 
 export const PlotType = {
   HEATMAP: "heatmap",
@@ -17,6 +23,9 @@ function App() {
   const [plotJson, setPlotJson] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [logs, setLogs] = useState<string[]>([]);
+
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
 
   const handleFormChange = (formData) => {
     if (formData) {
@@ -57,52 +66,105 @@ function App() {
   };
 
   return (
-    <div className="w-full flex flex-col lg:flex-row lg:h-screen">
+    <Box sx={{ width: "100%", minHeight: "100vh", overflow: "hidden" }}>
       {/* Top Bar */}
-      <div className="fixed top-0 left-0 w-full z-50 bg-gray-100 text-gray-800 px-6 py-3 shadow flex justify-center items-center">
-        <span className="font-semibold text-lg tracking-wide">
+      <Box
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          zIndex: 10,
+          backgroundColor: "grey.100",
+          color: "grey.800",
+          px: 3,
+          py: 2,
+          boxShadow: 2,
+          textAlign: "center",
+        }}
+      >
+        <Typography variant="h6" fontWeight="bold">
           Cleavage Enrichment Dashboard
-        </span>
-      </div>
+        </Typography>
+      </Box>
 
-      {/* Main Content with padding to avoid overlap */}
-      <div className="flex flex-1 flex-col pt-16 lg:flex-row w-full">
-        {/* <!-- Form --> */}
-        <div className="w-full lg:w-1/3 p-6 lg:overflow-y-auto overflow-visible scrollbar-none hide-scrollbar">
-          <UploadForm />
-          <Form onChange={handleFormChange} />
-        </div>
+      {/* Main Content */}
+      <Box sx={{ pt: 8, px: 2 }}>
+        <Grid
+          container
+          spacing={0}
+          direction={isLargeScreen ? "row" : "column"}
+          sx={{
+            height: isLargeScreen ? "calc(100vh - 64px)" : "auto",
+          }}
+        >
+          {/* Form Column */}
+          <Grid size={{ xs: 12, lg: 3 }}>
+            <Box
+              sx={{
+                height: isLargeScreen ? "calc(100vh - 64px)" : "auto",
+                overflowY: isLargeScreen ? "auto" : "visible",
+                px: 2,
+                py: 2,
+              }}
+            >
+              <Typography variant="h6">Logs</Typography>
+              <UploadForm />
+              <Form onChange={handleFormChange} />
+            </Box>
+          </Grid>
 
-        {/* <!-- Plot --> */}
-        <div className="w-full lg:overflow-y-auto">
-          <Typography variant="h6">Logs</Typography>
-          {isLoading ? (
-            <CircularProgress />
-          ) : (
-            <BackendPlot plotJson={plotJson} />
+          {/* Plot Column */}
+          <Grid size={{ xs: 12, lg: logs.length > 0 ? 6 : 9 }}>
+            <Box
+              sx={{
+                height: isLargeScreen ? "calc(100vh - 64px)" : "auto",
+                overflowY: isLargeScreen ? "auto" : "visible",
+                px: 2,
+                py: 2,
+              }}
+            >
+              <Typography variant="h6" gutterBottom>
+                Plot
+              </Typography>
+              {isLoading ? (
+                <CircularProgress />
+              ) : (
+                <BackendPlot plotJson={plotJson} />
+              )}
+            </Box>
+          </Grid>
+
+          {/* Logs Column */}
+
+          {logs.length > 0 && (
+            <Grid size={{ xs: 12, lg: 3 }}>
+              <Box
+                sx={{
+                  height: isLargeScreen ? "calc(100vh - 64px)" : "auto",
+                  overflowY: isLargeScreen ? "auto" : "visible",
+                  px: 2,
+                  py: 2,
+                }}
+              >
+                <Typography variant="h6">Logs</Typography>
+                <Stack spacing={2}>
+                  {isLoading ? (
+                    <CircularProgress />
+                  ) : (
+                    logs.map((log, index) => (
+                      <Alert key={index} severity={getSeverity(log)}>
+                        {cleanLogMessage(log)}
+                      </Alert>
+                    ))
+                  )}
+                </Stack>
+              </Box>
+            </Grid>
           )}
-        </div>
-
-        {logs.length !== 0 && (
-          <Stack
-            className="w-full lg:w-1/3 p-6 lg:overflow-y-auto"
-            spacing={2}
-            sx={{ p: 2 }}
-          >
-            <Typography variant="h6">Logs</Typography>
-            {isLoading ? (
-              <CircularProgress />
-            ) : (
-              logs.map((log, index) => (
-                <Alert key={index} severity={getSeverity(log)}>
-                  {cleanLogMessage(log)}
-                </Alert>
-              ))
-            )}
-          </Stack>
-        )}
-      </div>
-    </div>
+        </Grid>
+      </Box>
+    </Box>
   );
 }
 

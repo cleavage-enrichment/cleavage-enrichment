@@ -39,7 +39,7 @@ function App() {
       })
         .then((res) => res.json())
         .then((data) => {
-          setPlotJson(data["plot"] || []);
+          setPlotJson(data["plot"] || null);
           setLogs(data.logs || []);
         })
         .catch(() => {

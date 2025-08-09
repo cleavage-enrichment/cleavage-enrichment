@@ -96,13 +96,19 @@ def plot_view(request):
     except Exception:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     
-    plot = cleavage_enrichment.get_plot(formData)
-    plot_json = pio.to_json(plot)
-
-    response = JsonResponse({
-        "plot": plot_json,
-        "logs": log_handler.get_logs().splitlines()
-    })
+    try:
+        plot = cleavage_enrichment.get_plot(formData)
+        plot_json = pio.to_json(plot)
+    except Exception as e:
+        logger.error(f"Error creating plot: {e}")
+        response = JsonResponse({
+            "logs": list(set(log_handler.get_logs().splitlines())),
+        })
+    else:
+        response = JsonResponse({
+            "plot": plot_json,
+            "logs": list(set(log_handler.get_logs().splitlines())),
+        })
 
     logger.removeHandler(log_handler)
     log_handler.close()

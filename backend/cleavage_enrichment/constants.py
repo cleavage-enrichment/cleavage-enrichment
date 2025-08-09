@@ -1,7 +1,7 @@
 class PeptideDF:
     SAMPLE = "Sample"
     PROTEIN_ID = "Protein ID"
-    SEQUENCE = "Sequence"
+    PEPTIDE_SEQUENCE = "Sequence"
     INTENSITY = "Intensity"
 
 class Meta:

@@ -85,45 +85,32 @@ class CleavageEnrichment:
         ]
         """
 
-        peptides: pd.DataFrame = self.peptides[self.peptides["Protein ID"].isin(proteins)]
         metadata: pd.DataFrame = self.metadata
 
-        usesFilters = False
+        # Apply filters
+        peptides: pd.DataFrame = self.peptides[self.peptides["Protein ID"].isin(proteins)]
         for key, values in metadatafilter.items():
-            print(f"Filtering metadata by {key} with values {values}")
             if key in metadata.columns:
                 if values:
                     metadata = metadata[metadata[key].isin(values)]
-                    usesFilters = True
             else:
-                logger.warning(f"Metadata column '{key}' not found. Skipping filter for this column.")
-
+                logger.warning(f"Metadata column '{key}' not found. Skipping this filter.")
         peptides = pd.merge(metadata, peptides, on=Meta.SAMPLE, how='left')
 
         output = []
+        grouped = peptides.groupby([PeptideDF.PROTEIN_ID, group_by])
+        for group_name, group_df in grouped:
+            protein_sequence = self.getProteinSequence(group_name[0])
+            count, intensity = calculate_count_sum(protein_sequence,peptides=group_df,aggregation_method=aggregation_method)
 
-        for protein_id in proteins:
-            protein_sequence = self.getProteinSequence(protein_id)
-
-            sample_peptides = peptides[peptides[PeptideDF.PROTEIN_ID] == protein_id]
-            if sample_peptides.empty:
-                logger.warning(f"No peptides found for protein {protein_id} in metadata.")
-                continue
-
-            group_by = group_by if group_by != GroupBy.PROTEIN else PeptideDF.PROTEIN_ID
-            grouped = sample_peptides.groupby(group_by)
-
-            for group_name, group_df in grouped:
-                count, intensity = calculate_count_sum(protein_sequence,peptides=group_df,aggregation_method=aggregation_method)
-
-                entry = {
-                    OutpuKeys.LABEL: f"{group_name}",
-                    OutpuKeys.COUNT: count,
-                    OutpuKeys.INTENSITY: intensity,
-                }
-                if colored_metadata in group_df and not group_df[colored_metadata].empty:
-                    entry[OutpuKeys.COLOR_GROUP] = group_df[colored_metadata].iloc[0]
-                output.append(entry)
+            entry = {
+                OutpuKeys.LABEL: f"{group_name[0]} - {group_name[1]}" if len(proteins) > 1 and group_by != PeptideDF.PROTEIN_ID else group_name[1],
+                OutpuKeys.COUNT: count,
+                OutpuKeys.INTENSITY: intensity,
+            }
+            if colored_metadata in group_df and not group_df[colored_metadata].empty:
+                entry[OutpuKeys.COLOR_GROUP] = group_df[colored_metadata].iloc[0]
+            output.append(entry)
 
         return output
 

@@ -39,11 +39,11 @@ def calculate_count_sum(protein_sequence:str, peptides: pd.DataFrame, aggregatio
     """
     grouped_peptides: pd.DataFrame
     if aggregation_method == AggregationMethod.SUM:
-        grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE])[PeptideDF.INTENSITY].sum().reset_index()
+        grouped_peptides = peptides.groupby([PeptideDF.PEPTIDE_SEQUENCE])[PeptideDF.INTENSITY].sum().reset_index()
     elif aggregation_method == AggregationMethod.MEDIAN:
-        grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE])[PeptideDF.INTENSITY].median().reset_index()
+        grouped_peptides = peptides.groupby([PeptideDF.PEPTIDE_SEQUENCE])[PeptideDF.INTENSITY].median().reset_index()
     elif aggregation_method == AggregationMethod.MEAN:
-        grouped_peptides = peptides.groupby([PeptideDF.SEQUENCE])[PeptideDF.INTENSITY].mean().reset_index()
+        grouped_peptides = peptides.groupby([PeptideDF.PEPTIDE_SEQUENCE])[PeptideDF.INTENSITY].mean().reset_index()
     else:
         raise ValueError(f"Unknown group method: {aggregation_method}")
 
@@ -52,7 +52,7 @@ def calculate_count_sum(protein_sequence:str, peptides: pd.DataFrame, aggregatio
     intensity = [0] * proteinlength
 
     for _, peptide in grouped_peptides.iterrows():
-        start, end = find_peptide_position(protein_sequence, peptide[PeptideDF.SEQUENCE])
+        start, end = find_peptide_position(protein_sequence, peptide[PeptideDF.PEPTIDE_SEQUENCE])
         if start is None:
             continue
         for i in range(start-1, end):
@@ -61,14 +61,6 @@ def calculate_count_sum(protein_sequence:str, peptides: pd.DataFrame, aggregatio
                 intensity[i] += int(peptide[PeptideDF.INTENSITY])
 
     return count, intensity
-
-
-
-
-
-
-
-
 
 
 def process_data (peptide_file, metadata_file, fasta_file) -> tuple[pd.DataFrame, list]:
@@ -92,13 +84,13 @@ def process_data (peptide_file, metadata_file, fasta_file) -> tuple[pd.DataFrame
         print("Finding peptide positions...")
         # For each unique (Protein ID, Peptide Sequence), find positions
         positions = {}
-        for (protein_id, peptide_seq) in peptides[[PeptideDF.PROTEIN_ID, PeptideDF.SEQUENCE]].drop_duplicates().itertuples(index=False):
+        for (protein_id, peptide_seq) in peptides[[PeptideDF.PROTEIN_ID, PeptideDF.PEPTIDE_SEQUENCE]].drop_duplicates().itertuples(index=False):
             protein_seq = protein_seq_map.get(protein_id)
             start, end = find_peptide_positions(protein_seq, peptide_seq)
             positions[(protein_id, peptide_seq)] = (start, end)
 
         print("Calculate peptide positions for all samples...")
-        positions_list = [positions.get((row[PeptideDF.PROTEIN_ID], row[PeptideDF.SEQUENCE]), (None, None))
+        positions_list = [positions.get((row[PeptideDF.PROTEIN_ID], row[PeptideDF.PEPTIDE_SEQUENCE]), (None, None))
                           for _, row in peptides.iterrows()]
         
         print("Create dataframe from positions...")

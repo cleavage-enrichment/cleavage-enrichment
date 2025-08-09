@@ -363,7 +363,7 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
                 value: key,
                 label: key,
               }))
-              .concat([{ value: "protein", label: "Protein" }])}
+              .concat([{ value: "Protein ID", label: "Protein" }])}
             value={formData.group_by}
             onChange={(selectedOption) => {
               setFormData((prev) => ({

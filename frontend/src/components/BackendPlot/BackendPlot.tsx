@@ -26,7 +26,7 @@ export const BackendPlot: React.FC<BackendPlotProps> = ({ plotJson }) => {
   const [height, setHeight] = useState(600);
   const [format, setFormat] = useState("png");
 
-  if (!plotJson) return <div>Loading...</div>;
+  if (!plotJson) return null;
 
   const figure = JSON.parse(plotJson);
 

@@ -205,8 +205,8 @@ def create_bar_figure(
     # ------------------------------------------------------------------ ticks
     
     def ticks_for_side(max_val: float, tick_count: int = 2) -> List[float]:
-        step = max_val / (tick_count + 1)
-        return [round((i + 1) * step, 1) for i in range(tick_count)]
+        step = max_val / (tick_count+1)
+        return [(i + 1) * step for i in range(tick_count)]
 
     pos_tick_vals = ticks_for_side(max_scaled_y_pos)
     pos_tick_text = (
@@ -215,14 +215,14 @@ def create_bar_figure(
 
     if use_log_scale_y_neg:
         neg_tick_vals = [v * factor_y_neg for v in reversed(ticks_for_side(max_scaled_y_neg))]
-        neg_tick_text = [pot(round(v / factor_y_neg)) if v else 0 for v in neg_tick_vals]
+        neg_tick_text = [pot(v / factor_y_neg) if v else 0 for v in neg_tick_vals]
     else:
         raw_neg = list(reversed(ticks_for_side(max_y_neg)))
         neg_tick_vals = [v * factor_y_neg for v in raw_neg]
         neg_tick_text = raw_neg
 
     # Scientific notation for big numbers
-    format_label = lambda v: f"{v:.0e}" if v >= 100 else v
+    format_label = lambda v: f"{v:.1e}" if v >= 100 else f"{v:.1f}"
     pos_tick_text = list(map(format_label, pos_tick_text))
     neg_tick_text = list(map(format_label, neg_tick_text))
 
@@ -329,7 +329,7 @@ def create_bar_figure(
             zerolinewidth=1,
         )
 
-        # Reference‑mode annotations (optional)
+        # Reference‑mode annotations
         if barplot_data.reference_mode:
             fig.add_annotation(
                 text=orig.label_pos,
@@ -357,7 +357,7 @@ def create_bar_figure(
             xref="paper",
             yref=f'y{i+barplot_offset} domain',
             textangle= -90,
-            x=-0.08,
+            x=-0.1,
             y=0.5,
             xanchor="right",
             yanchor="middle",

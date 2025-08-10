@@ -75,6 +75,7 @@ def create_bar_figure(
     logarithmize_data_neg: bool = False,
 
     plot_limit: bool = True,
+    dashtypes: List[str] = ["dot", "dash", "dashdot", "30, 10", "longdash", "longdashdot"]
 ) -> go.Figure:
     """
     Create a Plot to visualize the Peptide Intensity, Count and cleavages over a Protein.
@@ -140,6 +141,14 @@ def create_bar_figure(
             Whether to transform the numeric values on the negative y axis with log before plotting.
         plot_limit (bool, default True):
             Whether to limit the number of plots to 10.
+        dashtypes (List[str], default ["dot", "dash", "dashdot", "30, 10", "longdashdot"]):
+            List of dash styles for the cleavage lines. Styles can be:
+            One of the following dash styles:
+            [‘solid’, ‘dot’, ‘dash’, ‘longdash’, ‘dashdot’, ‘longdashdot’]
+
+            A string containing a dash length list in pixels or percentages
+            (e.g. ‘5px 10px 2px 2px’, ‘5, 10, 2, 2’, ‘10% 20% 40%’, etc.)
+            See Plotly documentation: https://plotly.com/python-api-reference/generated/plotly.graph_objects.contour.html?highlight=dash#plotly.graph_objects.contour.Line.dash
 
     Returns:
         go.Figure: A Plotly figure object containing the bar plot and optional cleavage lines with
@@ -372,9 +381,6 @@ def create_bar_figure(
     fig.add_shape(type="line",x0=0,x1=0,y0=0,y1=0,xref="x",yref="y2 domain",line_width=0)
     fig.layout["yaxis2"].update(showticklabels=False)
 
-    # dashtypes for different cleavage plots
-    dashtypes = ["dot", "dash", "dashdot",  "30, 10"]
-
     # vertical lines through barplots
     if cleavages is not None:    
         # Add the cleavage names as annotations
@@ -386,7 +392,7 @@ def create_bar_figure(
                 fig.add_vline(
                     x=row['position'],
                     line_width=1,
-                    line_dash=dashtypes[plotpos],
+                    line_dash=dashtypes[plotpos%len(dashtypes)],
                     line_color="black",
                     row=i,
                     col=1,
@@ -406,7 +412,7 @@ def create_bar_figure(
                     y1=1,
                     xref="x",
                     yref="y2 domain",
-                    line=dict(color="black", dash=dashtypes[plotpos], width=1),
+                    line=dict(color="black", dash=dashtypes[plotpos%len(dashtypes)], width=1),
                 )
 
 

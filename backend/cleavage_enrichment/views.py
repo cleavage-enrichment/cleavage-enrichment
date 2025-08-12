@@ -92,7 +92,7 @@ def plot_view(request):
     logger.propagate = False
 
     try:
-        formData = json.loads(request.body)/
+        formData = json.loads(request.body)
     except Exception:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     

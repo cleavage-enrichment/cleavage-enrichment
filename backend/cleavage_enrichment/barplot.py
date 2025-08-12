@@ -42,10 +42,15 @@ def pot(x):
 
 
 # ----------  main plotting function -----------------------------------------
-
 def create_bar_figure(
-    barplot_data: BarplotData,
-    *,
+    pos_df: pd.DataFrame,
+    neg_df: pd.DataFrame,
+    legend_pos: str,
+    legend_neg: str,
+    ylabel: str,
+    metric: str,
+    reference_mode: str,
+
     cleavages: pd.DataFrame = #None,
     pd.DataFrame({
         "position": [1, 20, 30, 400, 501],
@@ -155,21 +160,28 @@ def create_bar_figure(
             motif logo plots.
     """
     # ------------------------------------------------------------------ guard
-    if not barplot_data.samples:
-        raise ValueError("Please provide at least one sample – nothing to plot.")
 
     if motifs and motif_names and len(motifs) != len(motif_names):
         raise ValueError("The number of motifs must match the number of motif names.")
 
     # ------------------------------------------------------------------ prep
-    if len(barplot_data.samples) > 10 and plot_limit:
+    if pos_df is None and neg_df is None:
+        raise ValueError("At least one of pos_df or neg_df must be provided.")
+
+    if pos_df is not None and len(pos_df) > 10 and plot_limit:
         logger.warning(
             "More than 10 samples provided, to prevent performance issues only the first 10 will be plotted. You can turn off this feature in the settings."
         )
-        barplot_data.samples = barplot_data.samples[:10]
+        pos_df = pos_df.iloc[:10]
+
+    if neg_df is not None and len(neg_df) > 10 and plot_limit:
+        logger.warning(
+            "More than 10 samples provided, to prevent performance issues only the first 10 will be plotted. You can turn off this feature in the settings."
+        )
+        neg_df = neg_df.iloc[:10]
 
     # constants for layout
-    rows = len(barplot_data.samples)
+    rows = max(len(pos_df)if pos_df is not None else 0, len(neg_df) if neg_df is not None else 0)
 
     title_height = 180
     logo_height = 200 if motifs is not None else 0
@@ -179,37 +191,32 @@ def create_bar_figure(
     total_height = title_height + logo_height + cleavage_lines_height + (rows * height_per_row)
 
     # Optionally log‑transform raw values
-    prepared = [
-        Sample(
-            **{k: s.get(k,"") for k in ("label", "label_pos", "label_neg")},
-            data_pos=[log(v) if logarithmize_data_pos else v for v in s["data_pos"]],
-            data_neg=[log(v) if logarithmize_data_neg else v for v in s["data_neg"]],
-        )
-        for s in barplot_data.samples
-    ]
+    if pos_df is not None and logarithmize_data_pos:
+        pos_df = pos_df.applymap(log)
+    if neg_df is not None and logarithmize_data_neg:
+        neg_df = neg_df.applymap(log)
 
     # Compute maxima (needed for scaling + tick placement)
-    max_y_pos = max(max(s.data_pos) if s.data_pos else 0 for s in prepared)
-    max_y_neg = max(max(s.data_neg) if s.data_neg else 0 for s in prepared)
-    max_x = max(len(s.data_pos) for s in prepared)
+    max_y_pos = pos_df.max().max() if pos_df is not None else 0
+    max_y_neg = neg_df.max().max() if neg_df is not None else 0
+    max_x = max(pos_df.shape[1] if pos_df is not None else 0, neg_df.shape[1] if neg_df is not None else 0)
 
-    if barplot_data.reference_mode:
+    if reference_mode:
         max_y_pos = max_y_neg = max(max_y_pos, max_y_neg)
 
-    max_scaled_y_pos = log(max_y_pos) if use_log_scale_y_pos else max_y_pos
-    max_scaled_y_neg = log(max_y_neg) if use_log_scale_y_neg else max_y_neg
+    if pos_df is not None:
+        scaled_pos_df = pos_df.applymap(log) if use_log_scale_y_pos else pos_df
+        max_scaled_y_pos = log(max_y_pos) if use_log_scale_y_pos else max_y_pos
+    else:
+        max_scaled_y_pos = 0
+    
+    if neg_df is not None:
+        scaled_neg_df = neg_df.applymap(log) if use_log_scale_y_neg else neg_df
+        max_scaled_y_neg = log(max_y_neg) if use_log_scale_y_neg else max_y_neg
+    else:
+        max_scaled_y_neg = 0
+    
     factor_y_neg = -(max_scaled_y_pos / max_scaled_y_neg) if max_scaled_y_neg != 0 else 1
-
-    # Calculations for display data log scaled
-    scaled = [
-        Sample(
-            **{k: getattr(s, k, "") for k in ("label", "label_pos", "label_neg")},
-            data_pos=[log(v) if use_log_scale_y_pos else v for v in s.data_pos],
-            data_neg=[(log(v) if use_log_scale_y_neg else v) for v in s.data_neg],
-        )
-        for s in prepared
-    ]
-
 
     # ------------------------------------------------------------------ ticks
     
@@ -290,37 +297,20 @@ def create_bar_figure(
 
 
     # ------------------------------------------------------------------ barplots
-
-    for i, (orig, disp) in enumerate(zip(prepared, scaled), start=1):
-        x_vals = list(range(1, len(disp.data_pos) + 1))
+    for i, ((pos_label, orig_pos), (_, disp_pos)) in enumerate(zip(pos_df.iterrows(), scaled_pos_df.iterrows()), start=1):
+        x_vals = list(range(1, len(disp_pos) + 1))
         barplot_number = i + barplot_offset
 
         # Positive bars
         fig.add_trace(
             go.Bar(
                 x=x_vals,
-                y=disp.data_pos,
-                name=barplot_data.legend_pos,
+                y=disp_pos,
+                name=legend_pos,
                 showlegend=True if i == 1 else False,
                 marker_color=colors[0],
-                customdata=[format_label(v) for v in orig.data_pos],
-                hovertemplate=barplot_data.legend_pos + ": %{customdata}<extra>Position: %{x}</extra>",
-                marker_line_width = 0,
-            ),
-            row=barplot_number,
-            col=1,
-        )
-
-        # Negative bars (mirrored)
-        fig.add_trace(
-            go.Bar(
-                x=x_vals,
-                y=[v * factor_y_neg for v in disp.data_neg],
-                name=barplot_data.legend_neg if i == 1 else None,
-                showlegend=True if i == 1 else False,
-                marker_color=colors[1],
-                customdata=[format_label(v) for v in orig.data_neg],
-                hovertemplate=barplot_data.legend_neg + ": %{customdata}<extra>Position: %{x}</extra>",
+                customdata=list(map(format_label, orig_pos)),
+                hovertemplate=legend_pos + ": %{customdata}<extra>Position: %{x}</extra>",
                 marker_line_width = 0,
             ),
             row=barplot_number,
@@ -339,9 +329,9 @@ def create_bar_figure(
         )
 
         # Reference‑mode annotations
-        if barplot_data.reference_mode:
+        if reference_mode:
             fig.add_annotation(
-                text=orig.label_pos,
+                text=pos_label,
                 x=0,
                 y=1,
                 xref="paper",
@@ -349,23 +339,48 @@ def create_bar_figure(
                 showarrow=False,
                 bgcolor="white",
             )
-            fig.add_annotation(
-                text=orig.label_neg,
-                x=0,
-                y=0,
-                xref="paper",
-                yref=f"y{barplot_number} domain",
-                showarrow=False,
-                bgcolor="white",
+    
+    if neg_df is not None:
+        for i, ((neg_label, orig_neg), (_, disp_neg)) in enumerate(zip(neg_df.iterrows(), scaled_neg_df.iterrows()), start=1):
+            x_vals = list(range(1, len(disp_neg) + 1))
+            barplot_number = i + barplot_offset
+
+            # Negative bars (mirrored)
+            fig.add_trace(
+                go.Bar(
+                    x=x_vals,
+                    y=list(map(lambda v: v*factor_y_neg, disp_neg)),
+                    name=legend_neg if i == 1 else None,
+                    showlegend=True if i == 1 else False,
+                    marker_color=colors[1],
+                    customdata=list(map(format_label, orig_neg)),
+                    hovertemplate=legend_neg + ": %{customdata}<extra>Position: %{x}</extra>",
+                    marker_line_width = 0,
+                ),
+                row=barplot_number,
+                col=1,
             )
 
+            # Reference‑mode annotation
+            if reference_mode:
+                fig.add_annotation(
+                    text=neg_label,
+                    x=0,
+                    y=0,
+                    xref="paper",
+                    yref=f"y{barplot_number} domain",
+                    showarrow=False,
+                    bgcolor="white",
+                )
+
     # plot titles
-    for i, s in enumerate(scaled, start=1):
-        fig.add_annotation(
-            text=s.label,
-            xref="paper",
-            yref=f'y{i+barplot_offset} domain',
-            textangle= -90,
+    if not reference_mode:
+        for i, (label, _) in enumerate(pos_df.iterrows(), start=1):
+            fig.add_annotation(
+                text=label,
+                xref="paper",
+                yref=f'y{i+barplot_offset} domain',
+                textangle= -90,
             x=-0.1,
             y=0.5,
             xanchor="right",
@@ -447,27 +462,39 @@ if __name__ == "__main__":
     import random
 
     # fabricate example data
-    sample1 = dict(
-        label="Protein A",
-        label_pos="Pos ref",
-        label_neg="Neg ref",
-        data_pos=[random.uniform(1e4, 1e4) for _ in range(10)],
-        data_neg=[random.uniform(1e0, 1e3) for _ in range(10)],
+    # sample1 = dict(
+    #     label="Protein A",
+    #     label_pos="Pos ref",
+    #     label_neg="Neg ref",
+    #     data_pos=[random.uniform(1e4, 1e4) for _ in range(10)],
+    #     data_neg=[random.uniform(1e0, 1e3) for _ in range(10)],
+    # )
+    data_pos = df = pd.DataFrame(
+        [
+            [10, 40, 70],
+            [20, 50, 80],
+            [30, 60, 90]
+        ],
+        index=['row1', 'row2', 'row3'],
+        columns=None
     )
-    sample2 = dict(
-        label="Protein B",
-        label_pos="Pos ref",
-        label_neg="Neg ref",
-        data_pos=[random.uniform(1e1, 1e3) for _ in range(10)],
-        data_neg=[random.uniform(1e2, 1e4) for _ in range(10)],
+    data_neg = df = pd.DataFrame(
+        [
+            [15, 45, 75],
+            [25, 55, 85],
+            [35, 65, 95]
+        ],
+        index=['row1', 'row2', 'row3'],
+        columns=None
     )
 
-    barplot_data = BarplotData(
-        samples=[sample1, sample2],
-        legend_pos="Peptide Intensity",
-        legend_neg="Peptide Count",
-        reference_mode=True,
-    )
+    # barplot_data = BarplotData(
+
+    #     samples=[sample1, sample2],
+    #     legend_pos="Peptide Intensity",
+    #     legend_neg="Peptide Count",
+    #     reference_mode=True,
+    # )
 
     cleavages = pd.DataFrame({
         "position": [1, 20, 30, 400, 501],
@@ -488,7 +515,12 @@ if __name__ == "__main__":
 
     # build figure
     fig = create_bar_figure(
-        barplot_data,
+        pos_df=data_pos,
+        neg_df=data_neg,
+        legend_pos="Peptide Intensity",
+        legend_neg="Peptide Count",
+        ylabel="Intensity / Count",
+        reference_mode=False,
 
         cleavages=cleavages,
         motifs=motifs,

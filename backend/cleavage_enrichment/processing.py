@@ -69,19 +69,15 @@ def process_data (peptide_file, metadata_file, fasta_file) -> tuple[pd.DataFrame
     This function reads the files and performs necessary checks.
     """
     try:
-        print("Loading files...")
         peptides = load_peptides(peptide_file)
         metadata = load_metadata(metadata_file)
         fasta_data = load_fasta(fasta_file)
-        print("Merge peptides with metadata...")
 
         peptides = pd.merge(metadata, peptides, on=Meta.SAMPLE, how='left')
-        print("Create protein sequence mapping...")
 
         # Create a mapping from protein ID to sequence
         protein_seq_map = dict(zip(fasta_data[FastaDF.ID], fasta_data[FastaDF.SEQUENCE]))
 
-        print("Finding peptide positions...")
         # For each unique (Protein ID, Peptide Sequence), find positions
         positions = {}
         for (protein_id, peptide_seq) in peptides[[PeptideDF.PROTEIN_ID, PeptideDF.PEPTIDE_SEQUENCE]].drop_duplicates().itertuples(index=False):
@@ -89,17 +85,12 @@ def process_data (peptide_file, metadata_file, fasta_file) -> tuple[pd.DataFrame
             start, end = find_peptide_positions(protein_seq, peptide_seq)
             positions[(protein_id, peptide_seq)] = (start, end)
 
-        print("Calculate peptide positions for all samples...")
         positions_list = [positions.get((row[PeptideDF.PROTEIN_ID], row[PeptideDF.PEPTIDE_SEQUENCE]), (None, None))
                           for _, row in peptides.iterrows()]
         
-        print("Create dataframe from positions...")
         positions_df = pd.DataFrame(positions_list, columns=["Peptide Start", "Peptide End"])
         
-        print("Merge positions with peptides DataFrame...")
         peptides = pd.concat([peptides.reset_index(drop=True), positions_df], axis=1)
-        
-        print("Data import successfull.")
 
         return peptides, metadata.columns.tolist()
 

@@ -19,18 +19,17 @@ def scientific_notation(value, precision=1):
 
 def calculate_ticks(data: list, is_log_scale=True, tickcount=4):
     flat_z = np.array(data).flatten()
-    min_val = 0
     max_val = np.max(flat_z, initial=0)
 
     if is_log_scale:
         max_val = log(max_val)
 
-    diff = max_val - min_val
+    diff = max_val
     step = diff / (tickcount - 1)
 
     tickvals = []
     ticktext = []
-    for i in np.arange(min_val, max_val*1.01, step):
+    for i in np.arange(0, max_val*1.01, step):
         if is_log_scale:
             tickvals.append(i)
             ticktext.append(scientific_notation(pot(i)))
@@ -136,7 +135,7 @@ def create_group_heatmap(fig, groups: pd.DataFrame, legend_y_offset = 0, color_p
 
 
 def create_heatmap_figure(
-    samples: dict,
+    df: dict,
     name: str = "",
     xlabel: str = "Amino acid position",
     ylabel: str = "",
@@ -175,31 +174,26 @@ def create_heatmap_figure(
     Returns:
         go.Figure: A Plotly figure object containing the heatmap.
     """
-
-    max_length = max(len(s["data"]) for s in samples) if samples else 0
-    for s in samples:
-        s["data"] = s["data"] + [0] * (max_length - len(s["data"]))
-
-    df = pd.DataFrame(
-        [s["data"] for s in samples],
-        index=[s["label"] for s in samples]
-    )
+    max_length = max(len(row) for _, row in df.iterrows()) if not df.empty else 0
+    num_of_rows = df.shape[0]
+    df = df.fillna(0)
 
     # Reverse the DataFrame to have the first sample at the top
     df = df[::-1]
+    color_groups = color_groups[::-1] if color_groups is not None else None
 
     margin_height = 180
     height_per_row = 20
-    heatmap_height = max(margin_height+250, margin_height + len(samples) * height_per_row)
+    heatmap_height = max(margin_height+250, margin_height + num_of_rows * height_per_row)
     colorbar_height = 200
     colorbar_factor = colorbar_height / (heatmap_height-margin_height)
 
-    if dendrogram and len(samples) <= 1:
+    if dendrogram and num_of_rows <= 1:
         logger.warning("Dendrogram needs at least two samples to be created. Skipping dendrogram.")
         dendrogram = False
 
     #TODO: put inot color grups function; look if set_index is needed
-    if color_groups is not None and len(color_groups) != len(df):
+    if color_groups is not None and len(color_groups) != num_of_rows:
         logger.warning("Color groups do not match the number of samples. Skipping color groups.")
         color_groups = None
     elif color_groups is not None:
@@ -299,7 +293,7 @@ def create_heatmap_figure(
             title = ylabel,
         ),
         width = 800,
-        height = max(400, 150 + len(samples) * 20),
+        height = max(400, 150 + num_of_rows * 20),
         margin = dict(l=200,r=200),
     )
 

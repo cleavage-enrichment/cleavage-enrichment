@@ -55,10 +55,15 @@ def logo_plot(df, title = "", colors=DEFAULT_COLORS):
     Returns:
         str: Base64 encoded PNG image of the logo plot.
     """
+    positions = df.index.tolist()
+    df.index = range(len(positions))
+
     # Create Figure
     _, ax = plt.subplots(figsize=(2, 2))
     logo = logomaker.Logo(df, ax=ax, color_scheme=colors)
     logo.ax.set_title(title)
+    logo.ax.set_xticks(range(len(positions)))
+    logo.ax.set_xticklabels(positions)
     logo.style_spines(visible=False)
     logo.style_spines(spines=['left', 'bottom'], visible=True)
 

@@ -25,7 +25,7 @@ class GroupBy:
     GROUP = "group"
     BATCH = "batch"
 
-class OutpuKeys:
+class OutputKeys:
     LABEL = "label"
     COUNT = "count"
     INTENSITY = "intensity"

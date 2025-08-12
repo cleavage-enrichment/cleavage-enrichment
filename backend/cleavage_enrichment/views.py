@@ -2,6 +2,7 @@ import json
 import logging
 import math
 import os
+import traceback
 import uuid
 from django.http import FileResponse
 from django.shortcuts import render
@@ -91,8 +92,7 @@ def plot_view(request):
     logger.propagate = False
 
     try:
-        formData = json.loads(request.body)
-        print(f"Received formData: {formData}")
+        formData = json.loads(request.body)/
     except Exception:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     
@@ -100,6 +100,7 @@ def plot_view(request):
         plot = cleavage_enrichment.get_plot(formData)
         plot_json = pio.to_json(plot)
     except Exception as e:
+        traceback.print_exc()
         logger.error(f"Error creating plot: {e}")
         response = JsonResponse({
             "logs": list(set(log_handler.get_logs().splitlines())),

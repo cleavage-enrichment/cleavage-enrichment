@@ -38,4 +38,5 @@ export type PlotStyle = {
 export interface FormProps {
   onChange: (formData: FormData) => void;
   onStyleChange?: (style: PlotStyle) => void;
+  refreshTrigger: number;
 }

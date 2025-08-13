@@ -5,7 +5,7 @@ import React, { useEffect } from "react";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 
-export const Form: React.FC<FormProps> = ({ onChange }) => {
+export const Form: React.FC<FormProps> = ({ onChange, refreshTrigger }) => {
   // Load from localStorage on first render
   const [formData, setFormData] = React.useState<FormData>(() => {
     const saved = localStorage.getItem("formData");
@@ -71,7 +71,7 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
 
   useEffect(() => {
     loadMetadataGroups();
-  }, []);
+  }, [refreshTrigger]);
 
   // for reference_group field
   function getReferenceGroupOptions() {
@@ -122,7 +122,6 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
             cacheOptions
             loadOptions={loadProteinOptions}
             value={formData.proteins ? formData.proteins[0] : undefined}
-            defaultOptions
             onChange={(selectedOption) => {
               setFormData((prev) => ({
                 ...prev,

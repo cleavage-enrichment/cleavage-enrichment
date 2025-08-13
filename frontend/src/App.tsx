@@ -23,6 +23,7 @@ function App() {
   const [plotJson, setPlotJson] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const [refreshFormCount, setRefreshFormCount] = useState(0);
 
   const theme = useTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
@@ -63,6 +64,9 @@ function App() {
     // Removes "INFO: ", "ERROR: ", etc.
     const parts = log.split(": ");
     return parts.length > 1 ? parts.slice(1).join(": ") : log;
+  };
+  const handleUploadComplete = () => {
+    setRefreshFormCount((prev) => prev + 1);
   };
 
   return (
@@ -109,8 +113,11 @@ function App() {
               }}
             >
               <Typography variant="h6">Settings</Typography>
-              <UploadForm />
-              <Form onChange={handleFormChange} />
+              <UploadForm onUploadComplete={handleUploadComplete} />
+              <Form
+                onChange={handleFormChange}
+                refreshTrigger={refreshFormCount}
+              />
             </Box>
           </Grid>
 
@@ -137,7 +144,7 @@ function App() {
 
           {/* Logs Column */}
 
-          {logs.length > 0 && (
+          {logs.length > 0 && !isLoading && (
             <Grid size={{ xs: 12, lg: 3 }}>
               <Box
                 sx={{
@@ -149,15 +156,11 @@ function App() {
               >
                 <Typography variant="h6">Logs</Typography>
                 <Stack spacing={2}>
-                  {isLoading ? (
-                    <CircularProgress />
-                  ) : (
-                    logs.map((log, index) => (
-                      <Alert key={index} severity={getSeverity(log)}>
-                        {cleanLogMessage(log)}
-                      </Alert>
-                    ))
-                  )}
+                  {logs.map((log, index) => (
+                    <Alert key={index} severity={getSeverity(log)}>
+                      {cleanLogMessage(log)}
+                    </Alert>
+                  ))}
                 </Stack>
               </Box>
             </Grid>

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
+import { UploadFormProps } from "./UploadForm.props";
 
-export const UploadForm: React.FC = () => {
+export const UploadForm: React.FC<UploadFormProps> = ({ onUploadComplete }) => {
   const peptideFileInputRef = useRef<HTMLInputElement>(null);
   const metaFileInputRef = useRef<HTMLInputElement>(null);
   const fastaFileInputRef = useRef<HTMLInputElement>(null);
@@ -51,6 +52,7 @@ export const UploadForm: React.FC = () => {
         throw new Error("Upload failed.");
       }
       setSuccess("File uploaded successfully.");
+      onUploadComplete();
     } catch (err: any) {
       setError(err.message || "Upload failed.");
     } finally {

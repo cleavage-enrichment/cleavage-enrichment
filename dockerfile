@@ -19,14 +19,14 @@ RUN curl -sSL https://install.python-poetry.org | python3 - \
 WORKDIR /app
 
 # Copy only necessary files to install dependencies
-COPY backend/pyproject.toml backend/poetry.lock ./
+COPY django_server/pyproject.toml django_server/poetry.lock ./
 
 # Install dependencies (no venv, use system python)
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi
 
 # Copy project files
-COPY backend .
+COPY django_server .
 
 # Collect static files (optional)
 RUN python manage.py collectstatic --noinput
@@ -34,7 +34,7 @@ RUN python manage.py collectstatic --noinput
 # Expose port
 EXPOSE 8000
 
-WORKDIR /app/backend
+WORKDIR /app/django_server
 
 # Start server
-CMD ["gunicorn", "backend.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "django_server.wsgi:application", "--bind", "0.0.0.0:8000"]

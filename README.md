@@ -13,9 +13,9 @@ frontend:
 
 
 # setup
-## backend
+## django_server
 - install poetry
-- cd backend; poetry install
+- cd django_server; poetry install
 
 # run server
 ## backend

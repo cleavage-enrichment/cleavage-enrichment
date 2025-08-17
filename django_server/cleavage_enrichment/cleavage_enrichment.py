@@ -45,9 +45,10 @@ def getProteins(peptides: pd.DataFrame, filter: str = "", count: int = 5):
 
 def get_metadata_groups(metadata: pd.DataFrame) -> dict[str, list[str]]:
     groups = {}
-    for column in metadata.columns:
-        unique_values = metadata[column].dropna().unique()
-        groups[column] = unique_values.tolist()
+    if metadata is not None:
+        for column in metadata.columns:
+            unique_values = metadata[column].dropna().unique()
+            groups[column] = unique_values.tolist()
     return groups
 
 
@@ -231,7 +232,7 @@ def barplot_data(peptides: pd.DataFrame, metadata: pd.DataFrame, fastadata: pd.D
         raise ValueError("No proteins specified for barplot data.")
     
     if not group_by:
-        raise ValueError("No group_by method specified for barplot data.")
+        raise ValueError("No grouping specified for barplot data.")
     
     if not aggregation_method:
         raise ValueError("No aggregation method specified for barplot data.")
@@ -274,15 +275,14 @@ def barplot_data(peptides: pd.DataFrame, metadata: pd.DataFrame, fastadata: pd.D
 def get_plot(peptides, metadata, fastadata, formData: dict) -> str:
     plottype: str | None = formData.pop("plot_type", None)
     if not plottype:
-        logger.error("Plot type not specified in formData.")
-        return []
+        raise ValueError("Plot type not specified.")
 
     if plottype == PlotType.HEATMAP:
         logarithmize_data = formData.pop("logarithmizeData", False)
         use_log_scale = formData.pop("useLogScale", False)
 
         fig = create_heatmap_figure(
-            **asdict(heatmap_data(**formData)),
+            **asdict(heatmap_data(peptides, metadata, fastadata, **formData)),
             logarithmize_data=logarithmize_data,
             use_log_scale=use_log_scale,
         )
@@ -305,5 +305,4 @@ def get_plot(peptides, metadata, fastadata, formData: dict) -> str:
                                 )
         return fig
     else:
-        logger.error(f"Unknown plot type: {plottype}")
-        return []
+        raise ValueError(f"Unknown plot type: {plottype}")

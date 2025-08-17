@@ -9,9 +9,7 @@ class Meta:
 
 class FastaDF:
     ID = "id"
-    DESCRIPTION = "description"
     SEQUENCE = "sequence"
-
 
 # Form options
 class AggregationMethod:

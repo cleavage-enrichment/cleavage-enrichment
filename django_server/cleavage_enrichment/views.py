@@ -9,7 +9,7 @@ import plotly.io as pio
 from .cleavage_enrichment import get_metadata_groups, get_plot, getProteins, read_data
 from utils.logging import InMemoryLogHandler
 
-from backend import settings
+from django_server import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.core.cache import cache

@@ -47,11 +47,27 @@ def create_bar_figure(
     legend_pos: str,
     legend_neg: str,
     reference_mode: bool = False,
+    ylabel: str = "",
+    metric: str = "",
 
-    cleavages: pd.DataFrame = None,
-    motifs: list[pd.DataFrame] = None,
-    motif_names: list[str] = None,
-    motif_probabilities: list[float] = None,
+
+    cleavages: pd.DataFrame = #None,
+    pd.DataFrame({
+                "position": [1, 20, 30, 400, 501],
+                "name": ["Trypsin", "Lys-C", "Lys-C", "Trypsin", "Trypsin"]
+            }),
+    motifs: list[pd.DataFrame] = [
+                pd.DataFrame([
+                    {'A': 0.0, 'G': 0.0, 'L': 0.0, 'K': 0.4, 'R': 0.4, 'H': 0.2},
+                    {'A': 0.5, 'G': 0.3, 'L': 0.2, 'K': 0.0, 'R': 0.0, 'H': 0.0}
+                ], index=[-1, 1]),
+                pd.DataFrame([
+                    {'A': 0.0, 'G': 0.0, 'L': 0.0, 'K': 0.8, 'R': 0.1, 'H': 0.1},
+                    {'A': 0.4, 'G': 0.4, 'L': 0.2, 'K': 0.0, 'R': 0.0, 'H': 0.0}
+                ], index=[-1, 1])
+            ],
+    motif_names: list[str] = ["Trypsin", "Lys-C"],
+    motif_probabilities: list[float] = [0.5, 0.2],
 
     title: str = "Cleavage Analysis",
     xlabel: str = "Amino acid position",
@@ -174,9 +190,9 @@ def create_bar_figure(
 
     # Optionally log‑transform raw values
     if pos_df is not None and logarithmize_data_pos:
-        pos_df = pos_df.applymap(log)
+        pos_df = pos_df.map(log)
     if neg_df is not None and logarithmize_data_neg:
-        neg_df = neg_df.applymap(log)
+        neg_df = neg_df.map(log)
 
     # Compute maxima (needed for scaling + tick placement)
     max_y_pos = pos_df.max().max() if pos_df is not None else 0
@@ -187,13 +203,13 @@ def create_bar_figure(
         max_y_pos = max_y_neg = max(max_y_pos, max_y_neg)
 
     if pos_df is not None:
-        scaled_pos_df = pos_df.applymap(log) if use_log_scale_y_pos else pos_df
+        scaled_pos_df = pos_df.map(log) if use_log_scale_y_pos else pos_df
         max_scaled_y_pos = log(max_y_pos) if use_log_scale_y_pos else max_y_pos
     else:
         max_scaled_y_pos = 0
     
     if neg_df is not None:
-        scaled_neg_df = neg_df.applymap(log) if use_log_scale_y_neg else neg_df
+        scaled_neg_df = neg_df.map(log) if use_log_scale_y_neg else neg_df
         max_scaled_y_neg = log(max_y_neg) if use_log_scale_y_neg else max_y_neg
     else:
         max_scaled_y_neg = 0

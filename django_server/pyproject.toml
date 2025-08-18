@@ -1,5 +1,5 @@
 [project]
-name = "backend"
+name = "django_server"
 version = "0.1.0"
 description = ""
 authors = [
@@ -19,11 +19,11 @@ dependencies = [
 ]
 
 [tool.poetry]
-name = "backend"
+name = "django_server"
 version = "0.1.0"
 description = ""
 authors = [
-    "Jonas Krohn jonas.krohn@gmx.de"
+    "Jonas Krohn"
 ]
 packages = [{include = "django_server", from = "src"}]
 package-mode = false

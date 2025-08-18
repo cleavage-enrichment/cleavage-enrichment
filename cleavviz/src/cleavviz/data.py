@@ -168,10 +168,10 @@ def heatmap_data(
     if metric not in [Metric.INTENSITY, Metric.COUNT]:
         raise ValueError(f"Unknown heatmap metric: {metric}")
 
-    if not aggregation_method and (group_by == GroupBy.SAMPLE or metric == self.Metric.COUNT):
+    if not aggregation_method and (group_by == GroupBy.SAMPLE or metric == Metric.COUNT):
         aggregation_method = AggregationMethod.MEDIAN
 
-    if not aggregation_method and group_by is not GroupBy.SAMPLE and metric is not self.Metric.INTENSITY:
+    if not aggregation_method and group_by is not GroupBy.SAMPLE and metric is not Metric.INTENSITY:
         raise ValueError("No aggregation method specified for heatmap data.")
 
     if aggregation_method is None:

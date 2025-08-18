@@ -46,30 +46,13 @@ def create_bar_figure(
     neg_df: pd.DataFrame,
     legend_pos: str,
     legend_neg: str,
-    ylabel: str,
-    metric: str,
-    reference_mode: str,
+    reference_mode: bool = False,
 
-    cleavages: pd.DataFrame = #None,
-    pd.DataFrame({
-        "position": [1, 20, 30, 400, 501],
-        "name": ["Trypsin", "Lys-C", "Lys-C", "Trypsin", "Trypsin"]
-    }),
-    motifs: list[pd.DataFrame] = #None,
-    [
-        pd.DataFrame([
-            {'A': 0.0, 'G': 0.0, 'L': 0.0, 'K': 0.4, 'R': 0.4, 'H': 0.2},
-            {'A': 0.5, 'G': 0.3, 'L': 0.2, 'K': 0.0, 'R': 0.0, 'H': 0.0}
-        ], index=[-1, 1]),
-        pd.DataFrame([
-            {'A': 0.0, 'G': 0.0, 'L': 0.0, 'K': 0.8, 'R': 0.1, 'H': 0.1},
-            {'A': 0.4, 'G': 0.4, 'L': 0.2, 'K': 0.0, 'R': 0.0, 'H': 0.0}
-        ], index=[-1, 1])
-    ],
-    motif_names: list[str] = #None,
-    ["Trypsin", "Lys-C"],
-    motif_probabilities: list[float] = [0.5,0.2],
-    
+    cleavages: pd.DataFrame = None,
+    motifs: list[pd.DataFrame] = None,
+    motif_names: list[str] = None,
+    motif_probabilities: list[float] = None,
+
     title: str = "Cleavage Analysis",
     xlabel: str = "Amino acid position",
     colors: list[str] = ["#4A536A", "#CE5A5A"],

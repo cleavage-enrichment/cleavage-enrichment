@@ -4,11 +4,10 @@ import logging
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-
 from dataclasses import dataclass, field
 from math import log
 from plotly.subplots import make_subplots
-from typing import List, Dict
+from typing import List
 
 from .logoplot import logo_plot
 

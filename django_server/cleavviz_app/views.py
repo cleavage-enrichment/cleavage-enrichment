@@ -1,18 +1,14 @@
 import json
 import logging
 import traceback
-import uuid
-from django.http import FileResponse
 import pandas as pd
 import plotly.io as pio
-
-from .cleavage_enrichment import get_metadata_groups, get_plot, getProteins, read_data
-from utils.logging import InMemoryLogHandler
-
 from django_server import settings
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from django.core.cache import cache
+from django.http import FileResponse, JsonResponse
+from utils.logging import InMemoryLogHandler
+
+from cleavviz.data import get_metadata_groups, get_plot, getProteins, read_data
 
 def index(request):
     file_path = settings.STATICFILES_BASE / 'frontend' / 'index.html'

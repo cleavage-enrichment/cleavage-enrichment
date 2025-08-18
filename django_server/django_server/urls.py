@@ -17,5 +17,5 @@ Including another URLconf
 from django.urls import include, path
 
 urlpatterns = [
-    path('', include('cleavage_enrichment.urls')),
+    path('', include('cleavviz_app.urls')),
 ]

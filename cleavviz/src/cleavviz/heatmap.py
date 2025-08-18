@@ -1,7 +1,6 @@
 import logging
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
-import plotly.io as pio
 import pandas as pd
 import numpy as np
 import plotly.express as px

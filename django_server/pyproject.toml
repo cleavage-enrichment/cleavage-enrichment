@@ -6,19 +6,16 @@ authors = [
     {name = "Jonas Krohn",email = "jonas.krohn@gmx.de"}
 ]
 readme = "README.md"
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.13,<4.0"
 dependencies = [
     "django (>=5.2,<6.0)",
     "django-types (>=0.20.0,<0.21.0)",
     "django-stubs-ext (>=5.2.0,<6.0.0)",
     "gunicorn (>=23.0.0,<24.0.0)",
     "whitenoise (>=6.9.0,<7.0.0)",
-    "pandas (>=2.2.3,<3.0.0)",
-    "pyteomics (>=4.7.5,<5.0.0)",
     "plotly (>=6.2.0,<7.0.0)",
-    "logomaker (>=0.8.7,<0.9.0)",
-    "matplotlib (>=3.10.3,<4.0.0)",
-    "scipy (>=1.16.1,<2.0.0)",
+    "pandas (>=2.3.1,<3.0.0)",
+    "cleavviz",
 ]
 
 [tool.poetry]
@@ -28,9 +25,11 @@ description = ""
 authors = [
     "Jonas Krohn jonas.krohn@gmx.de"
 ]
-packages = [{include = "backend", from = "src"}]
+packages = [{include = "django_server", from = "src"}]
 package-mode = false
 
+[tool.poetry.dependencies]
+cleavviz = { path = "../cleavviz", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"

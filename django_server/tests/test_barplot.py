@@ -1,10 +1,10 @@
 import os
-import tempfile
 import pytest
 import pandas as pd
 import numpy as np
 from plotly.graph_objs import Figure
-from cleavage_enrichment.barplot import create_bar_figure, BarplotData
+
+from cleavviz.barplot import create_bar_figure, BarplotData
 
 @pytest.fixture
 def sample_barplot_data():

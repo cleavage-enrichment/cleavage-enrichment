@@ -1,5 +1,4 @@
 import matplotlib
-import pandas as pd
 matplotlib.use('Agg')  # Non-GUI backend for headless rendering
 
 import matplotlib.pyplot as plt

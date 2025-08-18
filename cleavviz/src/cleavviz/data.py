@@ -4,14 +4,13 @@ from typing import IO
 
 import pandas as pd
 
-from .barplot import create_bar_figure, BarplotData
-from .constants import AggregationMethod, FastaDF, GroupBy, Meta, OutputKeys, PeptideDF
+from .barplot import create_bar_figure
+from .constants import AggregationMethod, FastaDF, GroupBy, Meta, PeptideDF
 from .heatmap import create_heatmap_figure
 from .io_utils import read_fasta_file, read_metadata_file, read_peptide_file
 from .processing import calculate_count_sum
 
 logger = logging.getLogger(__name__)
-
 
 def read_metadata(file: IO) -> pd.DataFrame:
     metadata = read_metadata_file(file)

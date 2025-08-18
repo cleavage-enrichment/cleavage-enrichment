@@ -2,7 +2,7 @@ import io
 import logging
 import pandas as pd
 from pyteomics import fasta
-from .constants import PeptideDF, Meta, FastaDF
+from .constants import Meta, FastaDF
 
 logger = logging.getLogger(__name__)
 

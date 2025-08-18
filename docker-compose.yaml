@@ -1,6 +1,6 @@
 services:
   web:
-    container_name: cleavage-enrichment
+    container_name: cleavviz_app
     build: .
     ports:
       - "8000:8000"

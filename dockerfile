@@ -15,18 +15,16 @@ ENV POETRY_VERSION=2.1.3
 RUN curl -sSL https://install.python-poetry.org | python3 - \
     && ln -s /root/.local/bin/poetry /usr/local/bin/poetry
 
-# Set working directory
-WORKDIR /app
+# Copy project files
+COPY django_server /app/django_server/
+COPY cleavviz /app/cleavviz/
 
-# Copy only necessary files to install dependencies
-COPY django_server/pyproject.toml django_server/poetry.lock ./
+WORKDIR /app/django_server
 
 # Install dependencies (no venv, use system python)
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi
 
-# Copy project files
-COPY django_server .
 
 # Collect static files (optional)
 RUN python manage.py collectstatic --noinput

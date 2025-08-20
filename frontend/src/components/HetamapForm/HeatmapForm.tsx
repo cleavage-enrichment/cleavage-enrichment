@@ -88,6 +88,7 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
   }, [refreshTrigger]);
 
   useEffect(() => {
+    localStorage.setItem("heatmapData", JSON.stringify(formData));
     onChange(formData);
   }, [formData]);
 

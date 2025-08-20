@@ -78,6 +78,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
   }, [refreshTrigger]);
 
   useEffect(() => {
+    localStorage.setItem("barplotData", JSON.stringify(formData));
     onChange(formData);
   }, [formData]);
 

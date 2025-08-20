@@ -66,7 +66,7 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
   >({});
 
   const loadProteinOptions = () => {
-    fetch(`/api/getproteins`)
+    fetch(`/api/proteins`)
       .then((res) => res.json())
       .then((data) => {
         setProteins(data.proteins || []);
@@ -74,7 +74,7 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
   };
 
   function loadMetadataGroups() {
-    fetch(`/api/getmetadatagroups`)
+    fetch(`/api/metadatagroups`)
       .then((res) => res.json())
       .then((data) => {
         setMetadataGroups(data.metadata_groups);

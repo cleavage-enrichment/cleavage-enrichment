@@ -23,6 +23,7 @@ export type BarplotData = {
 
   onlyStandardEnzymes: boolean;
   enzymes: string[];
+  species: string | null;
 };
 
 export const BarplotForm: React.FC<BarplotFormProps> = ({
@@ -48,6 +49,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
 
           onlyStandardEnzymes: true,
           enzymes: [],
+          species: null,
         };
   });
   const [proteins, setProteins] = useState([]);
@@ -55,9 +57,10 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
     Record<string, string[]>
   >({});
   const [enzymes, setEnzymes] = useState<string[]>([]);
+  const [species, setSpecies] = useState<string[]>([]);
 
   const loadProteinOptions = () => {
-    fetch(`/api/getproteins`)
+    fetch(`/api/proteins`)
       .then((res) => res.json())
       .then((data) => {
         setProteins(data.proteins || []);
@@ -65,7 +68,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
   };
 
   function loadMetadataGroups() {
-    fetch(`/api/getmetadatagroups`)
+    fetch(`/api/metadatagroups`)
       .then((res) => res.json())
       .then((data) => {
         setMetadataGroups(data.metadata_groups);
@@ -80,11 +83,20 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
       });
   }
 
+  function loadSpecies() {
+    fetch(`/api/species`)
+      .then((res) => res.json())
+      .then((data) => {
+        setSpecies(data.species || []);
+      });
+  }
+
   // Load Options
   useEffect(() => {
     loadProteinOptions();
     loadMetadataGroups();
     loadEnzymes();
+    loadSpecies();
   }, [refreshTrigger]);
 
   //send form data
@@ -145,7 +157,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
               <TextField
                 {...params}
                 label={key}
-                placeholder={`Select ${key}`}
+                placeholder={`If nothing selected all are used`}
               />
             )}
             value={formData.metadatafilter[key] ?? []}
@@ -378,6 +390,28 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
             setFormData((prev) => ({
               ...prev,
               enzymes: value,
+            }));
+          }}
+        />
+      </FormGrid>
+
+      <FormGrid size={{ xs: 12 }}>
+        <Autocomplete
+          options={species}
+          filterSelectedOptions
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Species"
+              placeholder="Select Species"
+              required
+            />
+          )}
+          value={formData.species}
+          onChange={(event, value) => {
+            setFormData((prev) => ({
+              ...prev,
+              species: value,
             }));
           }}
         />

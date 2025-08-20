@@ -23,10 +23,12 @@ export const SubsectionHeadline = styled(
 }));
 
 export const Form: React.FC<FormProps> = ({ onChange }) => {
+  const [formData, setFormData] = React.useState<any>({});
   const [plotType, setPlotType] = React.useState<string | null>(null);
   const [refreshFormCount, setRefreshFormCount] = useState(0);
 
   function onPlotFormChange(formData: HeatmapData | BarplotData) {
+    setFormData(formData);
     onChange({
       ...formData,
       plot_type: plotType,
@@ -35,6 +37,7 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
 
   const handleUploadComplete = () => {
     setRefreshFormCount((prev) => prev + 1);
+    onPlotFormChange(formData);
   };
 
   return (
@@ -56,7 +59,6 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
               required
             />
           )}
-          // value={formData.proteins?.[0] ?? null}
           onChange={(event, value) => {
             setPlotType(value);
           }}

@@ -73,6 +73,12 @@ def enzymes_view(request):
 
     return JsonResponse({"enzymes": enzymes})
 
+def species_view(request):
+    """
+    Get list of species.
+    """
+    species = ["Species 1", "Species 2", "Species 3"]
+    return JsonResponse({"species": species})
 
 def metadata_view(request):
     """

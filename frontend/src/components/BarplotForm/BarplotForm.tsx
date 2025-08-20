@@ -1,12 +1,11 @@
-import { styled } from "@mui/material/styles";
 import { BarplotFormProps } from "./BarplotForm.props";
-import Grid from "@mui/material/Grid";
 import { useEffect, useState } from "react";
 import React from "react";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
+import { SubsectionHeadline, FormGrid } from "../Form/Form";
 
 export type BarplotData = {
   proteins: string[];
@@ -21,12 +20,10 @@ export type BarplotData = {
   useLogScaleYPos: boolean;
   useLogScaleYNeg: boolean;
   plot_limit?: boolean;
-};
 
-const FormGrid = styled(Grid)(() => ({
-  display: "flex",
-  flexDirection: "column",
-}));
+  onlyStandardEnzymes: boolean;
+  enzymes: string[];
+};
 
 export const BarplotForm: React.FC<BarplotFormProps> = ({
   onChange,
@@ -48,12 +45,16 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
           useLogScaleYPos: false,
           useLogScaleYNeg: false,
           plot_limit: true,
+
+          onlyStandardEnzymes: true,
+          enzymes: [],
         };
   });
   const [proteins, setProteins] = useState([]);
   const [metadataGroups, setMetadataGroups] = React.useState<
     Record<string, string[]>
   >({});
+  const [enzymes, setEnzymes] = useState<string[]>([]);
 
   const loadProteinOptions = () => {
     fetch(`/api/getproteins`)
@@ -71,16 +72,32 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
       });
   }
 
+  function loadEnzymes() {
+    fetch(`/api/enzymes?onlyStandardEnzymes=${formData.onlyStandardEnzymes}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setEnzymes(data.enzymes || []);
+      });
+  }
+
   // Load Options
   useEffect(() => {
     loadProteinOptions();
     loadMetadataGroups();
+    loadEnzymes();
   }, [refreshTrigger]);
 
+  //send form data
   useEffect(() => {
     localStorage.setItem("barplotData", JSON.stringify(formData));
     onChange(formData);
   }, [formData]);
+
+  //reload enzyme options
+  useEffect(() => {
+    formData.enzymes = [];
+    loadEnzymes();
+  }, [formData.onlyStandardEnzymes]);
 
   // for reference_group field
   function getReferenceGroupOptions() {
@@ -94,6 +111,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
 
   return (
     <>
+      <SubsectionHeadline> Select Data</SubsectionHeadline>
       <FormGrid size={{ xs: 12 }}>
         <Autocomplete
           multiple
@@ -144,6 +162,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
         </FormGrid>
       ))}
 
+      <SubsectionHeadline> Plot Settings</SubsectionHeadline>
       <FormGrid size={{ xs: 12 }}>
         <Autocomplete
           id="group_by"
@@ -320,6 +339,47 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
             />
           }
           label="Generate a maximum of 10 plots"
+        />
+      </FormGrid>
+
+      <SubsectionHeadline>Cleavage Settings</SubsectionHeadline>
+      <FormGrid size={{ xs: 12 }}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={formData.onlyStandardEnzymes}
+              onChange={(event) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  onlyStandardEnzymes: event.target.checked,
+                }));
+              }}
+            />
+          }
+          label="Use only standard enzymes"
+        />
+      </FormGrid>
+
+      <FormGrid size={{ xs: 12 }}>
+        <Autocomplete
+          multiple
+          options={enzymes}
+          filterSelectedOptions
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Enzymes"
+              placeholder="Select Enzymes"
+              required
+            />
+          )}
+          value={formData.enzymes}
+          onChange={(event, value) => {
+            setFormData((prev) => ({
+              ...prev,
+              enzymes: value,
+            }));
+          }}
         />
       </FormGrid>
     </>

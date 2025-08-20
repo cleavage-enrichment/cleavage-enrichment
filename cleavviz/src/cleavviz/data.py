@@ -284,7 +284,8 @@ def get_plot(peptides, metadata, fastadata, formData: dict) -> str:
         logarithmize_data_pos = formData.pop("logarithmizeDataPos", False)
         logarithmize_data_neg = formData.pop("logarithmizeDataNeg", False)
         plot_limit = formData.pop("plot_limit", True)
-
+        onlyStandardEnzymes = formData.pop("onlyStandardEnzymes", True)
+        enzymes = formData.pop("enzymes", [])
         data = barplot_data(peptides, metadata, fastadata, **formData)
 
         fig = create_bar_figure(**asdict(data),

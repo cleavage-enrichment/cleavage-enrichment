@@ -7,10 +7,19 @@ import { styled } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import { BarplotData, BarplotForm } from "../BarplotForm/BarplotForm";
 import { UploadField } from "../UploadField";
+import { Typography } from "@mui/material";
 
-const FormGrid = styled(Grid)(() => ({
+export const FormGrid = styled(Grid)(() => ({
   display: "flex",
   flexDirection: "column",
+}));
+
+export const SubsectionHeadline = styled(
+  (props: React.PropsWithChildren<{}>) => (
+    <Typography variant="h5" {...props} />
+  ),
+)(({ theme }) => ({
+  fontWeight: "bold",
 }));
 
 export const Form: React.FC<FormProps> = ({ onChange }) => {
@@ -30,6 +39,7 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
 
   return (
     <Grid container spacing={3}>
+      <SubsectionHeadline>Upload Data</SubsectionHeadline>
       <UploadField name="Peptides" onFileUploaded={handleUploadComplete} />
       <UploadField name="Metadata" onFileUploaded={handleUploadComplete} />
       <UploadField name="Fastafile" onFileUploaded={handleUploadComplete} />

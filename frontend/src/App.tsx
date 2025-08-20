@@ -108,8 +108,6 @@ function App() {
                 py: 2,
               }}
             >
-              <Typography variant="h6">Settings</Typography>
-              {/* <UploadForm onUploadComplete={handleUploadComplete} /> */}
               <Form onChange={handleFormChange} />
             </Box>
           </Grid>

@@ -60,6 +60,20 @@ def proteins_view(request):
 
     return JsonResponse({"proteins": proteins})
 
+def enzymes_view(request):
+    """
+    Get list of enzymes.
+    """
+    onlyStandardEnzymes = request.GET.get('onlyStandardEnzymes', 'true') == 'true'
+
+    if onlyStandardEnzymes:
+        enzymes = ["Standard Enzyme 1", "Standard Enzyme 2"]
+    else:
+        enzymes = ["Test Enzyme 1", "Test Enzyme 2"]
+
+    return JsonResponse({"enzymes": enzymes})
+
+
 def metadata_view(request):
     """
     Get metadata columns from the dataset.

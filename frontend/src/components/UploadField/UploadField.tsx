@@ -22,7 +22,6 @@ export const UploadField: React.FC<UploadFieldProps> = ({
   const [progress, setProgress] = useState<number>(0);
 
   const uploadFile = async (file: File) => {
-    console.log("Uploading file:", file);
     setError(null);
     setSuccess(null);
     setProgress(0);

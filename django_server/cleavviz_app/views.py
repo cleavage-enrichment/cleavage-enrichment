@@ -32,11 +32,11 @@ def upload_view(request):
         meta_file = request.FILES.get('Metadata', None)
         fasta_file = request.FILES.get('Fastafile', None)
 
-        if peptide_file:
+        if peptide_file is not None:
             peptides = read_peptides(peptide_file)
-        elif meta_file:
+        elif meta_file is not None:
             metadata = read_metadata(meta_file)
-        elif fasta_file:
+        elif fasta_file is not None:
             fastadata = read_fasta(fasta_file)
         else:
             return JsonResponse({"error": "Unsupported file upload."}, status=400)
@@ -52,10 +52,12 @@ def proteins_view(request):
     """
     Search for proteins in the dataset based on a filter string.
     """
+    if peptides is None:
+        return JsonResponse({"proteins": []})
 
     filter = request.GET.get('filter','')
     proteins = getProteins(peptides, filter=filter)
-        
+
     return JsonResponse({"proteins": proteins})
 
 def metadata_view(request):

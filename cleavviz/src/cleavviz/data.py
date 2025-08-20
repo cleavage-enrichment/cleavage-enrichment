@@ -5,7 +5,7 @@ from typing import IO
 import pandas as pd
 
 from .barplot import create_bar_figure
-from .constants import AggregationMethod, FastaDF, GroupBy, Meta, PeptideDF
+from .constants import AggregationMethod, FastaDF, GroupBy, Meta, Metric, PeptideDF, PlotType
 from .heatmap import create_heatmap_figure
 from .io_utils import read_fasta_file, read_metadata_file, read_peptide_file
 from .processing import calculate_count_sum
@@ -33,14 +33,15 @@ def read_data(peptide_file: IO, metadata_file: IO, fasta_file: IO) -> tuple[pd.D
 
     return peptides, metadata, fastadata
 
-def getProteins(peptides: pd.DataFrame, filter: str = "", count: int = 5):
+def getProteins(peptides: pd.DataFrame, filter: str = "", count: int|None = None):
     """
     Search for proteins in the dataset based on a filter string.
     """
     unique_proteins = peptides[PeptideDF.PROTEIN_ID].dropna().unique()
     unique_series = pd.Series(unique_proteins)
     filtered = unique_series[unique_series.str.contains(filter, case=False, na=False)]
-    return filtered.head(count).tolist()
+    filtered = filtered if count is None else filtered.head(count)
+    return filtered.tolist()
 
 def get_metadata_groups(metadata: pd.DataFrame) -> dict[str, list[str]]:
     groups = {}
@@ -104,18 +105,9 @@ def plot_data(
         count_df = pd.concat([count_df, pd.DataFrame([count], index=[label])])
         if colored_metadata:
             if group_df[colored_metadata].nunique() > 1:
-                logger.warning(f"Multiple values for selected color-group '{colored_metadata}' in group '{group_name}'. Using first value.")
+                logger.warning(f"In group '{group_name}' different color_groups found. Using first value.")
             groups_df = pd.concat([groups_df, pd.DataFrame([group_df[colored_metadata].iloc[0]], columns=[colored_metadata])])
     return intensity_df, count_df, groups_df
-
-class PlotType:
-    HEATMAP = "heatmap"
-    BARPLOT = "barplot"
-
-class Metric:
-    INTENSITY_COUNT = "intensity_count"
-    INTENSITY = "intensity"
-    COUNT = "count"
 
 @dataclass
 class HEATMAPDATA:

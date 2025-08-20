@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import FileResponse, JsonResponse
 from utils.logging import InMemoryLogHandler
 
-from cleavviz.data import get_metadata_groups, get_plot, getProteins, read_data
+from cleavviz.data import get_metadata_groups, get_plot, getProteins, read_data, read_fasta, read_metadata, read_peptides
 
 def index(request):
     file_path = settings.STATICFILES_BASE / 'frontend' / 'index.html'
@@ -28,18 +28,18 @@ def upload_view(request):
         global metadata
         global fastadata
 
-        peptide_file = request.FILES.get('peptide_file', None)
-        meta_file = request.FILES.get('meta_file', None)
-        fasta_file = request.FILES.get('fasta_file', None)
+        peptide_file = request.FILES.get('Peptides', None)
+        meta_file = request.FILES.get('Metadata', None)
+        fasta_file = request.FILES.get('Fastafile', None)
 
-        if not peptide_file or not meta_file or not fasta_file:
-            return JsonResponse({"error": "Not all files uploaded"}, status=400)
-
-        peptides, metadata, fastadata = read_data(
-            peptide_file=peptide_file,
-            metadata_file=meta_file,
-            fasta_file=fasta_file
-        )
+        if peptide_file:
+            peptides = read_peptides(peptide_file)
+        elif meta_file:
+            metadata = read_metadata(meta_file)
+        elif fasta_file:
+            fastadata = read_fasta(fasta_file)
+        else:
+            return JsonResponse({"error": "Unsupported file upload."}, status=400)
 
         try:
             return JsonResponse({"message": "File processed successfully"})

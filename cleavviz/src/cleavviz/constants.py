@@ -12,16 +12,24 @@ class FastaDF:
     SEQUENCE = "sequence"
 
 # Form options
+class PlotType:
+    HEATMAP = "Heatmap"
+    BARPLOT = "Barplot"
 class AggregationMethod:
-    MEAN = "mean"
-    SUM = "sum"
-    MEDIAN = "median"
+    MEAN = "Mean"
+    SUM = "Sum"
+    MEDIAN = "Median"
 
 class GroupBy:
     PROTEIN = "protein"
     SAMPLE = "sample"
     GROUP = "group"
     BATCH = "batch"
+
+class Metric:
+    INTENSITY_COUNT = "Intensity and Count"
+    INTENSITY = "Intensity"
+    COUNT = "Count"
 
 class OutputKeys:
     LABEL = "label"

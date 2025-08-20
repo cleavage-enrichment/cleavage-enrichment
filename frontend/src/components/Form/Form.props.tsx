@@ -1,3 +1,6 @@
+import { BarplotData } from "../BarplotForm";
+import { HeatmapData } from "../HetamapForm";
+
 export type Option = {
   value: string;
   label: string;
@@ -28,15 +31,8 @@ export type FormData = {
   plot_limit?: boolean;
 };
 
-export type PlotStyle = {
-  useLogScaleYPos: boolean;
-  useLogScaleYNeg: boolean;
-  logarithmizeDataPos: boolean;
-  logarithmizeDataNeg: boolean;
-};
-
 export interface FormProps {
-  onChange: (formData: FormData) => void;
-  onStyleChange?: (style: PlotStyle) => void;
-  refreshTrigger: number;
+  onChange: (
+    formData: (HeatmapData | BarplotData) & { plot_type: string | null },
+  ) => void;
 }

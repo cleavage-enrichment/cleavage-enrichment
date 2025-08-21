@@ -6,7 +6,7 @@ import plotly.io as pio
 from django_server import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import FileResponse, JsonResponse
-from utils.logging import InMemoryLogHandler
+from utils.logging import InMemoryLogHandler, with_logging
 
 from cleavviz.data import get_metadata_groups, get_plot, getProteins, read_data, read_fasta, read_metadata, read_peptides
 
@@ -23,37 +23,36 @@ fastadata: pd.DataFrame = None
 enrichment_analysis: CleavageEnrichmentAnalysis = CleavageEnrichmentAnalysis()
 
 @csrf_exempt
-def upload_view(request):
+@with_logging
+def upload_view(request, logger):
     """
     Handle file upload and process the data.
     """
-    if request.method == 'POST':
-        global peptides
-        global metadata
-        global fastadata
+    if request.method != 'POST':
+        raise ValueError("Invalid request method. Only POST requests are allowed.")
 
-        peptide_file = request.FILES.get('Peptides', None)
-        meta_file = request.FILES.get('Metadata', None)
-        fasta_file = request.FILES.get('Fastafile', None)
+    global peptides
+    global metadata
+    global fastadata
 
-        if peptide_file is not None:
-            peptides = read_peptides(peptide_file)
-            enrichment_analysis.peptide_df = peptides
-        elif meta_file is not None:
-            metadata = read_metadata(meta_file)
-            enrichment_analysis.metadata = metadata
-        elif fasta_file is not None:
-            fastadata = read_fasta(fasta_file)
-            enrichment_analysis.fasta = fastadata
-        else:
-            return JsonResponse({"error": "Unsupported file upload."}, status=400)
+    peptide_file = request.FILES.get('Peptides', None)
+    meta_file = request.FILES.get('Metadata', None)
+    fasta_file = request.FILES.get('Fastafile', None)
 
-        try:
-            return JsonResponse({"message": "File processed successfully"})
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+    if peptide_file is not None:
+        peptides = read_peptides(peptide_file)
+        enrichment_analysis.peptide_df = peptides
+    elif meta_file is not None:
+        metadata = read_metadata(meta_file)
+        enrichment_analysis.metadata = metadata
+    elif fasta_file is not None:
+        fastadata = read_fasta(fasta_file)
+        enrichment_analysis.fasta = fastadata
+    else:
+        raise ValueError("No valid file uploaded. Please upload at least one of the following: Peptides, Metadata, Fastafile.")
 
-    return JsonResponse({"error": "Invalid request method"}, status=405)
+    return JsonResponse({"message": "File processed successfully"})
+
 
 def proteins_view(request):
     """
@@ -96,42 +95,17 @@ def metadata_view(request):
     return JsonResponse({"metadata_groups": metadata_groups})
 
 @csrf_exempt
-def plot_view(request):
+@with_logging
+def plot_view(request, logger):
     """
     Render the plot view.
     """
     if request.method != "POST":
-        return JsonResponse({"error": "Invalid request method"}, status=405)
+        raise ValueError("Invalid request method. Only POST requests are allowed.")
     
-    logger = logging.getLogger()
-    log_handler = InMemoryLogHandler()
-    log_handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(levelname)s: %(message)s')
-    log_handler.setFormatter(formatter)
-    logger.addHandler(log_handler)
-    logger.propagate = False
+    formData = json.loads(request.body)
 
-    try:
-        formData = json.loads(request.body)
-    except Exception:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
-    
-    try:
-        plot = get_plot(peptides, metadata, fastadata, formData, enrichment_analysis)
-        plot_json = pio.to_json(plot)
-    except Exception as e:
-        traceback.print_exc()
-        logger.error(f"Error creating plot: {e}")
-        response = JsonResponse({
-            "logs": list(set(log_handler.get_logs().splitlines())),
-        })
-    else:
-        response = JsonResponse({
-            "plot": plot_json,
-            "logs": list(set(log_handler.get_logs().splitlines())),
-        })
+    plot = get_plot(peptides, metadata, fastadata, formData, enrichment_analysis)
+    plot_json = pio.to_json(plot)
 
-    logger.removeHandler(log_handler)
-    log_handler.close()
-
-    return response
+    return JsonResponse({"plot": plot_json})

@@ -2,7 +2,7 @@ import io
 import logging
 import pandas as pd
 from pyteomics import fasta
-from .constants import Meta, FastaDF
+from .constants import Meta, FastaDF, PeptideDF
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,14 @@ def read_fasta(file):
     return pd.DataFrame(records)
 
 def read_peptide_file(file) -> pd.DataFrame:
-    return pd.read_csv(file)
+    df = pd.read_csv(file)
+
+    assert PeptideDF.SAMPLE in df.columns, f"Peptide file must contain a column named '{PeptideDF.SAMPLE}'."
+    assert PeptideDF.INTENSITY in df.columns, f"Peptide file must contain a column named '{PeptideDF.INTENSITY}'."
+    assert PeptideDF.PROTEIN_ID in df.columns, f"Peptide file must contain a column named '{PeptideDF.PROTEIN_ID}'."
+    assert PeptideDF.PEPTIDE_SEQUENCE in df.columns, f"Peptide file must contain a column named '{PeptideDF.PEPTIDE_SEQUENCE}'."
+
+    return df
 
 def read_metadata_file(file) -> pd.DataFrame:
     df = pd.read_csv(file)

@@ -296,7 +296,7 @@ def get_plot(peptides, metadata, fastadata, formData: dict, enrichment_analysis)
         plot_limit = formData.pop("plot_limit", True)
 
         calculateCleavages = formData.pop("calculateCleavages", False)
-        useMerops = formData.pop("onlyStandardEnzymes", False)
+        useMerops = formData.pop("useMerops", False)
         enzymes = formData.pop("enzymes", [])
         species = formData.pop("species", [])
         data = barplot_data(peptides, metadata, fastadata, **formData)

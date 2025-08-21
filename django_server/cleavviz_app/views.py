@@ -70,9 +70,9 @@ def enzymes_view(request):
     """
     Get list of enzymes.
     """
-    onlyStandardEnzymes = request.GET.get('onlyStandardEnzymes', 'true') == 'true'
+    useMerops = request.GET.get('useMerops', 'true') == 'true'
 
-    if onlyStandardEnzymes:
+    if useMerops:
         enzymes = ["Standard Enzyme 1", "Standard Enzyme 2"]
     else:
         enzymes = ["Test Enzyme 1", "Test Enzyme 2"]

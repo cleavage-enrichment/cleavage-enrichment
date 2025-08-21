@@ -180,7 +180,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
       <FormGrid size={{ xs: 12 }}>
         <Autocomplete
           id="group_by"
-          options={Object.keys(metadataGroups)}
+          options={Object.keys(metadataGroups).concat("Protein ID")}
           filterSelectedOptions
           renderInput={(params) => (
             <TextField

@@ -49,8 +49,13 @@ export const UploadField: React.FC<UploadFieldProps> = ({
     xhr.onload = () => {
       setIsUploading(false);
       if (xhr.status >= 200 && xhr.status < 300) {
-        setSuccess("File uploaded successfully.");
-        onFileUploaded();
+        var response = JSON.parse(xhr.responseText);
+        if (response.error) {
+          setError("Upload failed. " + response.error);
+        } else {
+          setSuccess("File uploaded successfully.");
+          onFileUploaded();
+        }
       } else {
         setError("Upload failed.");
       }
@@ -67,11 +72,7 @@ export const UploadField: React.FC<UploadFieldProps> = ({
   return (
     <FormGrid size={{ xs: 12 }}>
       <Box display="flex" alignItems="center" gap={2}>
-        <Button
-          variant="contained"
-          component="label"
-          // disabled={isUploading}
-        >
+        <Button variant="contained" component="label" disabled={isUploading}>
           {isUploading ? "Uploading..." : "Upload " + name}
           <input
             type="file"

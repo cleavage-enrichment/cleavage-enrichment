@@ -257,7 +257,7 @@ def create_bar_figure(
 
 
     # ------------------------------------------------------------------ logo plots
-    if motifs is not None:
+    if motifs is not None and len(motifs) > 0:
         number_of_motifs = len(motifs)
         motif_width = 1 / number_of_motifs
         motif_positions = [motif_width/2 + i * motif_width for i in range(number_of_motifs)]

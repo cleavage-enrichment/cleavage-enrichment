@@ -10,6 +10,8 @@ from utils.logging import InMemoryLogHandler
 
 from cleavviz.data import get_metadata_groups, get_plot, getProteins, read_data, read_fasta, read_metadata, read_peptides
 
+from cleavviz.cleavage_calculation.cleavage_enrichment_analysis import CleavageEnrichmentAnalysis
+
 def index(request):
     file_path = settings.STATICFILES_BASE / 'frontend' / 'index.html'
     return FileResponse(open(file_path, 'rb'), content_type='text/html')
@@ -17,6 +19,8 @@ def index(request):
 peptides: pd.DataFrame = None
 metadata: pd.DataFrame = None
 fastadata: pd.DataFrame = None
+
+enrichment_analysis: CleavageEnrichmentAnalysis = CleavageEnrichmentAnalysis()
 
 @csrf_exempt
 def upload_view(request):
@@ -34,10 +38,13 @@ def upload_view(request):
 
         if peptide_file is not None:
             peptides = read_peptides(peptide_file)
+            enrichment_analysis.peptide_df = peptides
         elif meta_file is not None:
             metadata = read_metadata(meta_file)
+            enrichment_analysis.metadata = metadata
         elif fasta_file is not None:
             fastadata = read_fasta(fasta_file)
+            enrichment_analysis.fasta = fastadata
         else:
             return JsonResponse({"error": "Unsupported file upload."}, status=400)
 
@@ -110,7 +117,7 @@ def plot_view(request):
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     
     try:
-        plot = get_plot(peptides, metadata, fastadata, formData)
+        plot = get_plot(peptides, metadata, fastadata, formData, enrichment_analysis)
         plot_json = pio.to_json(plot)
     except Exception as e:
         traceback.print_exc()

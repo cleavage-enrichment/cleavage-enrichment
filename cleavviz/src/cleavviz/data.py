@@ -263,7 +263,7 @@ def barplot_data(peptides: pd.DataFrame, metadata: pd.DataFrame, fastadata: pd.D
     return output
 
     
-def get_plot(peptides, metadata, fastadata, formData: dict) -> str:
+def get_plot(peptides, metadata, fastadata, formData: dict, enrichment_analysis) -> str:
     plottype: str | None = formData.pop("plot_type", None)
     if not plottype:
         raise ValueError("Plot type not specified.")
@@ -284,17 +284,34 @@ def get_plot(peptides, metadata, fastadata, formData: dict) -> str:
         logarithmize_data_pos = formData.pop("logarithmizeDataPos", False)
         logarithmize_data_neg = formData.pop("logarithmizeDataNeg", False)
         plot_limit = formData.pop("plot_limit", True)
-        onlyStandardEnzymes = formData.pop("onlyStandardEnzymes", True)
+        useMerops = formData.pop("onlyStandardEnzymes", False)
         enzymes = formData.pop("enzymes", [])
         species = formData.pop("species", [])
         data = barplot_data(peptides, metadata, fastadata, **formData)
+
+        if len(formData["proteins"]) != 0:
+            results = enrichment_analysis.protein(formData["proteins"][0])
+            cleavages = results["cleavages"]
+            top_enzymes = results["enzymes"][:2]
+            motif_names = [k for k,v in top_enzymes]
+            motifs = [v["motif"] for k,v in top_enzymes]
+
+        else:
+            cleavages = pd.DataFrame()
+            motif_names = []
+            motifs = []
+
+        print("cleavages in data:",cleavages, motif_names, motifs)
 
         fig = create_bar_figure(**asdict(data),
                                     use_log_scale_y_pos=use_log_scale_y_pos,
                                     use_log_scale_y_neg=use_log_scale_y_neg,
                                     logarithmize_data_pos=logarithmize_data_pos,
                                     logarithmize_data_neg=logarithmize_data_neg,
-                                    plot_limit=plot_limit
+                                    plot_limit=plot_limit,
+                                    cleavages=cleavages,
+                                    motif_names=motif_names,
+                                    motifs=motifs
                                 )
         return fig
     else:

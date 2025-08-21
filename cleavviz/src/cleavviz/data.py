@@ -79,6 +79,11 @@ def plot_data(
     """
     Get plot data.
     """
+    if peptides is None:
+        raise ValueError("No peptides provided.")
+
+    if fastadata is None:
+        raise ValueError("No FASTA data provided.")
 
     # Apply filters
     peptides: pd.DataFrame = peptides[peptides["Protein ID"].isin(proteins)]
@@ -88,12 +93,17 @@ def plot_data(
                 metadata = metadata[metadata[key].isin(values)]
         else:
             logger.warning(f"Metadata column '{key}' not found. Skipping this filter.")
-    peptides = pd.merge(metadata, peptides, on=Meta.SAMPLE, how='left')
+    
+    if metadata is not None:
+        peptides = pd.merge(metadata, peptides, on=Meta.SAMPLE, how='left')
 
     output = []
     intensity_df = pd.DataFrame()
     count_df = pd.DataFrame()
     groups_df = pd.DataFrame(columns=[colored_metadata]) if colored_metadata else None
+
+    if group_by not in peptides.columns:
+        raise ValueError(f"Group by {group_by} not possible because no column named {group_by} exists in peptides or metadata file.")
 
     grouped = peptides.groupby([PeptideDF.PROTEIN_ID, group_by])
     for group_name, group_df in grouped:

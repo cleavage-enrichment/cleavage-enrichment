@@ -64,7 +64,7 @@ class CleavageEnrichmentAnalysis:
         
     @peptide_df.setter
     def peptide_df(self, peptide_df):
-        if self._fasta != None:
+        if self._fasta is not None:
             self._peptide_df = get_cleavage_sites(peptide_df, self._kmer_index, self._protein_sequences, sites=SITES)
         else:
             self._peptide_df = peptide_df

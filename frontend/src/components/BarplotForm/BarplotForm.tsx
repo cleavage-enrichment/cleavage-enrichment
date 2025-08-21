@@ -21,6 +21,7 @@ export type BarplotData = {
   useLogScaleYNeg: boolean;
   plot_limit?: boolean;
 
+  calculateCleavages: boolean;
   onlyStandardEnzymes: boolean;
   enzymes: string[];
   species: string | null;
@@ -47,6 +48,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
           useLogScaleYNeg: false,
           plot_limit: true,
 
+          calculateCleavages: false,
           onlyStandardEnzymes: true,
           enzymes: [],
           species: null,
@@ -355,6 +357,23 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
       </FormGrid>
 
       <SubsectionHeadline>Cleavage Settings</SubsectionHeadline>
+      <FormGrid size={{ xs: 12 }}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={formData.calculateCleavages}
+              onChange={(event) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  calculateCleavages: event.target.checked,
+                }));
+              }}
+            />
+          }
+          label="Calculate Cleavages"
+        />
+      </FormGrid>
+
       <FormGrid size={{ xs: 12 }}>
         <FormControlLabel
           control={

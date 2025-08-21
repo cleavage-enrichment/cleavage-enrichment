@@ -284,12 +284,14 @@ def get_plot(peptides, metadata, fastadata, formData: dict, enrichment_analysis)
         logarithmize_data_pos = formData.pop("logarithmizeDataPos", False)
         logarithmize_data_neg = formData.pop("logarithmizeDataNeg", False)
         plot_limit = formData.pop("plot_limit", True)
+
+        calculateCleavages = formData.pop("calculateCleavages", False)
         useMerops = formData.pop("onlyStandardEnzymes", False)
         enzymes = formData.pop("enzymes", [])
         species = formData.pop("species", [])
         data = barplot_data(peptides, metadata, fastadata, **formData)
 
-        if len(formData["proteins"]) != 0:
+        if len(formData["proteins"]) != 0 and calculateCleavages:
             results = enrichment_analysis.protein(formData["proteins"][0])
             cleavages = results["cleavages"]
             top_enzymes = results["enzymes"][:2]
@@ -297,9 +299,9 @@ def get_plot(peptides, metadata, fastadata, formData: dict, enrichment_analysis)
             motifs = [v["motif"] for k,v in top_enzymes]
 
         else:
-            cleavages = pd.DataFrame()
-            motif_names = []
-            motifs = []
+            cleavages = None
+            motif_names = None
+            motifs = None
 
         print("cleavages in data:",cleavages, motif_names, motifs)
 

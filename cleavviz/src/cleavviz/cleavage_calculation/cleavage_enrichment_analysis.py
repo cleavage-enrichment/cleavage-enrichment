@@ -2,9 +2,9 @@ import pandas as pd
 from .constants import alphabet, base_enzymes
 from .kmer import build_kmer_index_and_background, get_cleavage_sites
 from .regex_trie import RegexTrie
-from .motifs import create_regexs
+from .motifs import create_regexs, get_filtered_enzyme_df
 from .matching import map_sites_to_enzymes
-from .database_manager import get_enzyme_df
+from .helper import get_enzyme_df
 
 SITES = 4
 
@@ -19,7 +19,7 @@ class CleavageEnrichmentAnalysis:
         self._useMerops = False
         self._species = None
         self._additionalEnzymes = None
-        self._enzyme_df = None
+        self._enzyme_df = get_enzyme_df()
 
         self._kmer_index = None
         self._protein_sequences = None
@@ -104,21 +104,16 @@ class CleavageEnrichmentAnalysis:
     
 
     def calculate(self):
-        #pssms, regexs = create_regexs(self._enzyme_df, self._background, SITES)
+        self._filtered_enzyme_df = get_filtered_enzyme_df(self._enzyme_df, self._useMerops, self._species, self._additionalEnzymes)
+        pssms, regexs, code_to_name = create_regexs(self._filtered_enzyme_df, self._background, self._useMerops, SITES)
 
         trie = RegexTrie(alphabet)
 
-        for enzyme in base_enzymes:
-            #print(enzyme, base_enzymes[enzyme])
-            trie.insert(base_enzymes[enzyme], enzyme)
-        
-        # if self._useMerops:
-        #     for code in regexs:
-        #         protease = self._enzymeCodes[code]
-        #         regex = regexs[code]
-        #         trie.insert(regex, protease)
+        for code in regexs:
+            regex = regexs[code]
+            trie.insert(regex, code)
 
-        self._per_protein_result, self._total_result = map_sites_to_enzymes(self._peptide_df, trie)
+        self._per_protein_result, self._total_result = map_sites_to_enzymes(self._peptide_df, trie, pssms, code_to_name)
 
 
 

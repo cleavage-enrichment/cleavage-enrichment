@@ -22,6 +22,7 @@ def build_kmer_index_and_background(fasta, k=6):
             background[sequence[i]] += 1
         for j in sequence[-k:]:
             background[j] +=1
+
     return kmer_index, protein_sequences, background
 
 

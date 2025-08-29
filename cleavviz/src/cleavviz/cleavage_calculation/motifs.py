@@ -4,12 +4,9 @@ from Bio import motifs
 from collections import defaultdict
 from typing import get_args
 from .helper import convert_3to1
-from .constants import AminoAcid
 
-site_columns = [
-        "Site_P4", "Site_P3", "Site_P2", "Site_P1",
-        "Site_P1prime", "Site_P2prime", "Site_P3prime", "Site_P4prime"
-    ]
+from .constants import AminoAcid, site_columns, base_enzymes, base_enzyme_codes, base_enzyme_codes_without_P
+
 
 amino_acids = list(get_args(AminoAcid))
 alphabet= "".join(x for x in amino_acids)
@@ -21,8 +18,7 @@ def calculate_pssms(counts_by_code, background):
 
     for code in counts_by_code:
 
-        site_counts = pd.DataFrame(counts_by_code[code]).fillna(0).astype(int).reindex(index=site_columns, columns=amino_acids)
-        site_counts = site_counts.drop(columns=['X'], errors='ignore')
+        site_counts = counts_by_code[code]
 
         empty_sites = site_counts[(site_counts == 0).all(axis=1)].index.tolist()
         site_counts_clean = site_counts.drop(index = empty_sites)
@@ -64,8 +60,11 @@ def pssm_to_regex(pssms, sites):
     regexs = defaultdict(list)
 
     for code, pssm in pssms.items():
+        if code in base_enzyme_codes:
+            regex = base_enzymes[code]["regex"]
+            regexs[code] = regex[4-sites:4+sites]
+            continue
         regex=[]
-        isSpecific = False
         for site in site_columns:
             enriched_aa_list = [aa for aa in amino_acids if pssm[aa][site] > 1.68]
 
@@ -76,41 +75,57 @@ def pssm_to_regex(pssms, sites):
                 else:
                     regex.append(["X"])
             else:
-                isSpecific = True
                 regex.append(enriched_aa_list)
-        # if (code == "S01.131" or code == "S01.153"):
-        #     pd.set_option('display.max_rows', None)     # Show all rows
-        #     pd.set_option('display.max_columns', None)  # Show all columns
-        #     # print(regex)
-        #     # print(pssm)
-        if isSpecific:
-            regexs[code] = regex[4-sites:4+sites]
+        regexs[code] = regex[4-sites:4+sites]
     
     return regexs
 
 
 
-def create_regexs(merops_df, background, sites=4):
+def create_regexs(enzyme_df, background, useMerops, sites=4):
 
-    merops_df[site_columns] = merops_df[site_columns].fillna('X')
-  
-    counts_by_code = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+    counts_by_code = defaultdict(lambda: pd.DataFrame(0, index=site_columns, columns=amino_acids))
 
-    for _, row in merops_df.iterrows():
-        code = row['code']
-        for site in site_columns:
-            aa = convert_3to1(row[site])
-            counts_by_code[code][aa][site] += 1
-    
+    code_to_name = defaultdict(str)
 
-    for code in counts_by_code:
-        for aa in amino_acids:
-            for site in site_columns:
-                _ = counts_by_code[code][aa][site]
-        
-    
+    for _, row in enzyme_df.iterrows():
+
+        code = row["code"]
+        code_to_name[row["code"]] = row["enzyme_name"]
+
+        for pos in site_columns:
+            for aa in amino_acids:
+                col_name = f"{pos}_{aa}"
+                if col_name in row and pd.notna(row[col_name]):
+                    counts_by_code[code].at[pos, aa] = row[col_name]
+
+        for code in base_enzyme_codes_without_P:
+            for aa in amino_acids:
+                counts_by_code[code].at["Site_P1prime",aa] = background[aa]
+
     pssms = calculate_pssms(counts_by_code,background)
 
     regexs = pssm_to_regex(pssms, sites)
+
+    print("code_to_name",code_to_name)
     
-    return pssms,regexs
+    return pssms,regexs, code_to_name
+
+def get_filtered_enzyme_df(enzyme_df, useMerops, species, enzymes):
+
+    mask = pd.Series(False, index=enzyme_df.index)
+
+    if useMerops == False:
+        mask |= enzyme_df["code"].isin(base_enzyme_codes)
+
+    else:
+        if species == None and enzymes == None:
+            return enzyme_df
+        
+        if species is not None:
+            mask |= enzyme_df["species"] == species
+
+        if enzymes is not None:
+            mask |= enzyme_df["enzyme_name"].isin(enzymes)
+
+    return enzyme_df[mask]

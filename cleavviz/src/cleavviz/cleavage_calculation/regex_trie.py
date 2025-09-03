@@ -4,7 +4,7 @@ class RegexTrieNode:
     def __init__(self):
         # Edges: map from bitmask of allowed letters → child node
         self.children: Dict[int, 'RegexTrieNode'] = {}
-        self.proteases: List[str] = []  # store protease names if this is an end node
+        self.proteases: List[str] = []
 
 class RegexTrie:
     def __init__(self, alphabet: List[str]):
@@ -14,7 +14,7 @@ class RegexTrie:
         self.full_mask = (1 << len(alphabet)) - 1
 
     def _expand_set(self, token_list: List[str]) -> int:
-        """Convert a token into a bitmask of allowed letters."""
+        '''Convert a token into a bitmask of allowed letter.'''
         if token_list == ["X"]:
             return self.full_mask
         elif all(tok.startswith("!") for tok in token_list):
@@ -39,11 +39,6 @@ class RegexTrie:
                 node = node.children[allowed_mask]
             if protease_name not in node.proteases:
                 node.proteases.append(protease_name)
-
-    def bulk_insert(self, regexes_with_names: List[tuple]):
-        """Insert many regexes efficiently. Each element is (regex, protease_name)."""
-        for regex, protease_name in regexes_with_names:
-            self.insert(regex, protease_name)
 
     def match(self, word: str) -> List[str]:
         matches = []

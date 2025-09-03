@@ -41,13 +41,13 @@ def upload_view(request, logger):
 
     if peptide_file is not None:
         peptides = read_peptides(peptide_file)
-        enrichment_analysis.peptide_df = peptides
+        enrichment_analysis.set_peptides(peptides)
     elif meta_file is not None:
         metadata = read_metadata(meta_file)
         enrichment_analysis.metadata = metadata
     elif fasta_file is not None:
         fastadata = read_fasta(fasta_file)
-        enrichment_analysis.fasta = fastadata
+        enrichment_analysis.set_fasta(fastadata)
     else:
         raise ValueError("No valid file uploaded. Please upload at least one of the following: Peptides, Metadata, Fastafile.")
 
@@ -70,12 +70,9 @@ def enzymes_view(request):
     """
     Get list of enzymes.
     """
-    useMerops = request.GET.get('useMerops', 'true') == 'true'
-
-    if useMerops:
-        enzymes = ["Standard Enzyme 1", "Standard Enzyme 2"]
-    else:
-        enzymes = ["Test Enzyme 1", "Test Enzyme 2"]
+    
+    filter = request.GET.get('filter')
+    enzymes = enrichment_analysis.search_enzymes(filter)
 
     return JsonResponse({"enzymes": enzymes})
 
@@ -83,7 +80,10 @@ def species_view(request):
     """
     Get list of species.
     """
-    species = ["Species 1", "Species 2", "Species 3"]
+
+    filter = request.GET.get('filter')
+    species = enrichment_analysis.search_species(filter)
+
     return JsonResponse({"species": species})
 
 def metadata_view(request):

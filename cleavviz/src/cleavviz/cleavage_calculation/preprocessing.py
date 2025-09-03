@@ -33,7 +33,7 @@ def get_filtered_enzyme_df(enzyme_df, use_standard_enzymes, species, enzymes):
 
     mask = pd.Series(False, index=enzyme_df.index)
 
-    if species is None and enzymes is None and not use_standard_enzymes:
+    if species == None and enzymes == None and not use_standard_enzymes:
         return enzyme_df
     
     if use_standard_enzymes:

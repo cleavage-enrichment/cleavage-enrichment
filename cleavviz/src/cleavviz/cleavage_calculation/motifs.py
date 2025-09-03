@@ -2,29 +2,28 @@ import pandas as pd
 import numpy as np
 from Bio import motifs
 from collections import defaultdict
-from typing import get_args
-from .helper import convert_3to1
-
-from .constants import AminoAcid, site_columns, base_enzymes, base_enzyme_codes, base_enzyme_codes_without_P
-
-
-amino_acids = list(get_args(AminoAcid))
-alphabet= "".join(x for x in amino_acids)
-
+from .constants import amino_acids, alphabet, site_columns, base_enzymes, base_enzyme_codes, base_enzyme_codes_without_P
 
 def calculate_pssms(counts_by_code, background):
+    '''
+    Calculate the position specific scoring matrices for all enzyme candidates.
+
+    args:
+        counts_by_code: Dictionary containing all observed cleavages for all enzyme candidates.
+        background: Dictionary with the total count of each amino acid.
+
+    returns:
+        pssms: List of all position specific scoring matrices for all enzyme candidates.
+    '''
 
     pssms = defaultdict(list)
 
     for code in counts_by_code:
 
         site_counts = counts_by_code[code]
-
         empty_sites = site_counts[(site_counts == 0).all(axis=1)].index.tolist()
         site_counts_clean = site_counts.drop(index = empty_sites)
-
         full_pssm = pd.DataFrame(0.0, index=site_columns, columns=amino_acids)
-        #full_relative_entropy = pd.Series(0.0, index=site_columns)
 
         if not site_counts_clean.empty:
             counts_dict = {aa: list(site_counts_clean[aa]) for aa in site_counts_clean.columns}
@@ -32,7 +31,6 @@ def calculate_pssms(counts_by_code, background):
             m.background = background
             m.pseudocounts = 1
             pssm = m.pssm
-            #relative_entropy = m.relative_entropy
 
             pssm_array = np.array([[pssm[aa][i] for aa in site_counts_clean.columns]
                            for i in range(len(site_counts_clean))])
@@ -45,25 +43,29 @@ def calculate_pssms(counts_by_code, background):
 
             full_pssm.loc[site_counts_clean.index] = pssm_df
 
-            #full_relative_entropy.loc[site_counts_clean.index] = relative_entropy
-
-        pssms[code] = full_pssm#, full_relative_entropy)
-        # if code == "S01.151":
-        #     pd.set_option('display.max_rows', None)     # Show all rows
-        #     pd.set_option('display.max_columns', None)  # Show all columns
-        #     print(full_pssm)
+        pssms[code] = full_pssm
 
     return pssms
 
 
 def pssm_to_regex(pssms, sites):
+    '''
+    Create a regex patterns from position specific scoring matrices.
 
-    regexs = defaultdict(list)
+    args:
+        pssms: List of all position specific scoring matrices for all enzyme candidates.
+        sites: #TODO
+
+    returns:
+        regexes: Dictionary of regex patterns for all enzyme candidates.   
+    '''
+
+    regexes = defaultdict(list)
 
     for code, pssm in pssms.items():
         if code in base_enzyme_codes:
             regex = base_enzymes[code]["regex"]
-            regexs[code] = regex[4-sites:4+sites]
+            regexes[code] = regex[4-sites:4+sites]
             continue
         regex=[]
         for site in site_columns:
@@ -77,16 +79,28 @@ def pssm_to_regex(pssms, sites):
                     regex.append(["X"])
             else:
                 regex.append(enriched_aa_list)
-        regexs[code] = regex[4-sites:4+sites]
+
+        regexes[code] = regex[4-sites:4+sites]
     
-    return regexs
+    return regexes
 
 
+def analyze_enzymes(enzyme_df, background, sites=4):
+    '''
+    Analyze all candidate enzymes, calculate position specific scoring matrices and create regex patterns
 
-def create_regexs(enzyme_df, background, sites=4):
+    args:
+        enzyme_df: Pandas dataframe containing all enzyme candidates along with their observed cleavages.
+        background: Dictionary with the total count of each amino acid.
+        sites: #TODO
+
+    returns:
+        pssms: List of all position specific scoring matrices for all enzyme candidates.
+        regexes: Dictionary of regex patterns for all enzyme candidates.  
+        code_to_name: Dicionary to map enzyme code to their real name.
+    '''
 
     counts_by_code = defaultdict(lambda: pd.DataFrame(0, index=site_columns, columns=amino_acids))
-
     code_to_name = defaultdict(str)
 
     for _, row in enzyme_df.iterrows():
@@ -105,32 +119,6 @@ def create_regexs(enzyme_df, background, sites=4):
                 counts_by_code[code].at["Site_P1prime",aa] = background[aa]
 
     pssms = calculate_pssms(counts_by_code,background)
-
-    regexs = pssm_to_regex(pssms, sites)
+    regexes = pssm_to_regex(pssms, sites)
     
-    return pssms,regexs, code_to_name
-
-def get_filtered_enzyme_df(enzyme_df, useMerops, species, enzymes):
-
-    mask = pd.Series(False, index=enzyme_df.index)
-    print("filter",useMerops, species, enzymes)
-    if useMerops == False:
-        mask |= enzyme_df["code"].isin(base_enzyme_codes)
-
-    else:
-        if species == None and enzymes == None:
-            return enzyme_df
-        
-        if species is not None:
-            mask |= enzyme_df["species"] == species
-
-        if enzymes is not None:
-            mask |= enzyme_df["enzyme_name"].isin(enzymes)
-
-    print(mask)
-
-    filtered = enzyme_df[mask]
-
-    print(filtered)
-
-    return filtered
+    return pssms, regexes, code_to_name

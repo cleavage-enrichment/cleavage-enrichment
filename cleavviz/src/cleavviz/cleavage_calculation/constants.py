@@ -1,7 +1,6 @@
-from typing import List, Literal, get_args
-from collections import defaultdict
+from typing import Literal, get_args
 
-# Types
+# types
 
 AminoAcid = Literal[
     "A",  # Alanine
@@ -26,11 +25,18 @@ AminoAcid = Literal[
     "V"   # Valine
 ]
 
-#constants
+# constants
 
 amino_acids = list(get_args(AminoAcid))
         
 alphabet= "".join(x for x in amino_acids)
+
+three_to_one = {
+    "Ala": "A", "Arg": "R", "Asn": "N", "Asp": "D", "Cys": "C",
+    "Glu": "E", "Gln": "Q", "Gly": "G", "His": "H", "Ile": "I",
+    "Leu": "L", "Lys": "K", "Met": "M", "Phe": "F", "Pro": "P",
+    "Ser": "S", "Thr": "T", "Trp": "W", "Tyr": "Y", "Val": "V"
+    }
 
 site_columns = [
         "Site_P4", "Site_P3", "Site_P2", "Site_P1",
@@ -57,8 +63,6 @@ base_enzymes = {
     "M72.001": {"name": "Asp-N", "regex": [['X'], ['X'], ['X'], ['X'], ['D'], ['X'], ['X'], ['X']]},
     "S01.001": {"name": "Chymotrypsin", "regex": [['X'], ['X'], ['X'], ['F', 'Y', 'W', 'L'], ['!P'], ['X'], ['X'], ['X']]},
     "S01.001/P": {"name": "Chymotrypsin/P", "regex": [['X'], ['X'], ['X'], ['F', 'Y', 'W', 'L'], ['X'], ['X'], ['X'], ['X']]}
-
-
     # "cyanogen-bromide": [['X'], ['X'], ['X'], ['M'], ['X'], ['X'], ['X'], ['X']], Chem
     # "Formic_acid": [['X'], ['X'], ['X'], ['D', 'N'], ['D', 'N'], ['X'], ['X'], ['X']], Chem
     # "2-iodobenzoate": [['X'], ['X'], ['X'], ['W'], ['X'], ['X'], ['X'], ['X']], Chem

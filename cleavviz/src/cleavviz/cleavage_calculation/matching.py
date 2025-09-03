@@ -1,14 +1,26 @@
 import pandas as pd
 import numpy as np
 import math
-from collections import defaultdict
 from .constants import site_columns
-from scipy.stats import norm, chi2
+from .helper import normalize_background
+from scipy.stats import norm
 
-def map_sites_to_enzymes(df, trie, pssms, code_to_name, background):
+def match_enzymes(df, trie, pssms, code_to_name, background):
+    '''
+    Match enzymes with observed cleavage while also calculating a p_value for each match.
+
+    args:
+        df: Pandas dataframe containing all observed cleavages along with their matched protein and metadata.
+        trie: Search tree containing the regex patterns for all candidate enzymes.
+        pssms: Dictionary containing the position specific scoring matrices for all candidate enzymes.
+        code_to_name: Dicionary to map enzyme code to their real name.
+        background: Dictionary with the total count of each amino acid.
+
+    returns:
+        Pandas dataframe containing all information for each cleavage.
+    '''
 
     all_rows = []
-
     relative_bg = normalize_background(background)
 
     for row in df.itertuples(index=True, name="Row"):
@@ -23,7 +35,7 @@ def map_sites_to_enzymes(df, trie, pssms, code_to_name, background):
 
         if n_term_match != "":
             all_rows.append({
-                "sequence": n_term_window,
+                "cleavage_site": n_term_window,
                 "proteinID": row.proteinID,
                 "enzyme": n_term_match,
                 "position": row.n_term_position,
@@ -33,7 +45,7 @@ def map_sites_to_enzymes(df, trie, pssms, code_to_name, background):
 
         if c_term_match != "":
             all_rows.append({
-                "sequence": c_term_window,  # <- was wrong: used n_term_window before
+                "cleavage_site": c_term_window,
                 "proteinID": row.proteinID,
                 "enzyme": c_term_match,
                 "position": row.c_term_position,
@@ -41,16 +53,25 @@ def map_sites_to_enzymes(df, trie, pssms, code_to_name, background):
                 "sample": row.Sample,
             })
 
-    return pd.DataFrame(all_rows, columns=["sequence","proteinID","enzyme","position","p_value","sample"])
+    return pd.DataFrame(all_rows, columns=["cleavage_site","proteinID","enzyme","position","p_value","sample"])
 
-def find_best_match(matches, pssms, cleavage_site, background):
+
+def find_best_match(matches, pssms, cleavage_site, background_frequency):
+    '''
+    Find best match based on pssm-scores for all pre-matched candidates via the Trie.
+
+    args:
+        matches: List of all candidate enzymes.
+        pssms: Dictionary containing the position specific scoring matrices for all candidate enzymes.
+        cleavage_site: String of the cleaved amino acid sequence.
+        background_frequency: Dictionary containing background frequencies representing the probability of each amino acid at a random position.
+    '''
+
     best_score = float("-inf")
     best_match = None
 
     for match in matches:
-        # Example: assume `pssms[match]` gives you a numeric score
         score = calculate_pssm_score(pssms[match], cleavage_site)
-
         if score > best_score:
             best_score = score
             best_match = match
@@ -58,50 +79,68 @@ def find_best_match(matches, pssms, cleavage_site, background):
     if best_match == None:
         return "unspecified cleavage", 0
     
-    p_value = p_value_from_pssm_normal(pssms[match], cleavage_site, background)
+    p_value = calculate_p_value(pssms[match], cleavage_site, background_frequency)
 
-    return best_match , p_value
+    return best_match, p_value
 
 
-def calculate_pssm_score(pssm, match):
+def calculate_pssm_score(pssm, cleavage_site):
+    '''
+    Calculate the pssm-score for a match.
+
+    args:
+        pssm: Position specific scoring matrix for the match.
+        cleavage_site: String of the cleaved amino acid sequence.
+
+    returns:
+        score: Number indicating how good a match is.
+    '''
+
     score = 0.0
-    for i, aa in enumerate(match):
+    for i, aa in enumerate(cleavage_site):
         site = site_columns[i]
         if aa in pssm.columns and site in pssm.index:
             score += pssm.loc[site, aa]
     return score
 
 
-def p_value_from_pssm_normal(pssm: pd.DataFrame, match: str, bg_freq: dict, one_sided=True):
-    """
-    pssm: DataFrame indexed by site (site_columns), columns = amino acids, values = numeric scores (additive)
-    match: string of amino acids (length <= number of sites considered)
-    bg_freq: dict {aa: probability}, should sum to 1
-    one_sided: if True returns P(S_null >= observed); else returns two-sided p.
-    """
-    # Convert to numpy operations for speed
-    # sites in pssm.index correspond to match positions (site_columns used earlier)
-    L = len(match)
+def calculate_p_value(pssm: pd.DataFrame, cleavage_site: str, background_frequency: dict):
+    '''
+    Calculate the p_value for a match.
+
+    args:
+        pssm: Position specific scoring matrix for the match
+        cleavage_site: String of the cleaved amino acid sequence.
+        background_frequency: Dictionary containing background frequencies representing the probability of each amino acid at a random position.
+    
+    returns:
+        p_value: Number for a match between 0 and 1 indicating how statistically significant the match is.
+    '''
+
+    L = len(cleavage_site)
     # Ensure we only consider the first L sites in the pssm index (or match may align differently in your pipeline)
     sites = list(pssm.index[:L])
     # Make matrix shape (L, 20) with columns in same order as bg keys
-    aa_order = list(bg_freq.keys())
-    bg_array = np.array([bg_freq[aa] for aa in aa_order], dtype=float)
+    aa_order = list(background_frequency.keys())
+    bg_array = np.array([background_frequency[aa] for aa in aa_order], dtype=float)
 
     # Create array scores[L, A] where A = len(aa_order)
     score_matrix = np.array([[pssm.loc[s, aa] if aa in pssm.columns else 0.0 for aa in aa_order] for s in sites])
+
     # Per-site expected score under background
-    exp_per_site = score_matrix.dot(bg_array)          # shape (L,)
+    exp_per_site = score_matrix.dot(bg_array)
+
     # Per-site second moment -> E[s^2] = sum p(a) * s(a)^2
     e2_per_site = (score_matrix**2).dot(bg_array)
-    var_per_site = e2_per_site - exp_per_site**2        # shape (L,)
+    var_per_site = e2_per_site - exp_per_site**2
+
     mu = exp_per_site.sum()
     sigma2 = var_per_site.sum()
     sigma = math.sqrt(sigma2) if sigma2 > 0 else 0.0
 
     # observed score
     obs = 0.0
-    for i, aa in enumerate(match):
+    for i, aa in enumerate(cleavage_site):
         site = sites[i]
         if aa in pssm.columns and site in pssm.index:
             obs += float(pssm.loc[site, aa])
@@ -113,16 +152,6 @@ def p_value_from_pssm_normal(pssm: pd.DataFrame, match: str, bg_freq: dict, one_
         return p
 
     z = (obs - mu) / sigma
-    if one_sided:
-        # p = P_null(score >= obs)
-        p = 1.0 - norm.cdf(z)
-    else:
-        p = 2.0 * (1.0 - norm.cdf(abs(z)))
-    return p
+    p_value = 1.0 - norm.cdf(z)
 
-def normalize_background(bg_counts: dict):
-    total = sum(bg_counts.values())
-    if total == 0:
-        raise ValueError("Background counts sum to 0")
-    bg_probs = {aa: count / total for aa, count in bg_counts.items()}
-    return bg_probs
+    return p_value

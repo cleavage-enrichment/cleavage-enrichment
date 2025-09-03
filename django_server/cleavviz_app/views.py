@@ -41,13 +41,13 @@ def upload_view(request, logger):
 
     if peptide_file is not None:
         peptides = read_peptides(peptide_file)
-        enrichment_analysis.peptide_df = peptides
+        enrichment_analysis.set_peptides(peptides)
     elif meta_file is not None:
         metadata = read_metadata(meta_file)
         enrichment_analysis.metadata = metadata
     elif fasta_file is not None:
         fastadata = read_fasta(fasta_file)
-        enrichment_analysis.fasta = fastadata
+        enrichment_analysis.set_fasta(fastadata)
     else:
         raise ValueError("No valid file uploaded. Please upload at least one of the following: Peptides, Metadata, Fastafile.")
 

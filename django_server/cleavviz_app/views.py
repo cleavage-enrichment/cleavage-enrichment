@@ -70,12 +70,9 @@ def enzymes_view(request):
     """
     Get list of enzymes.
     """
-    useMerops = request.GET.get('useMerops', 'true') == 'true'
-
-    if useMerops:
-        enzymes = ["Standard Enzyme 1", "Standard Enzyme 2"]
-    else:
-        enzymes = ["Test Enzyme 1", "Test Enzyme 2"]
+    
+    filter = request.GET.get('filter')
+    enzymes = enrichment_analysis.search_enzymes(filter)
 
     return JsonResponse({"enzymes": enzymes})
 
@@ -83,7 +80,10 @@ def species_view(request):
     """
     Get list of species.
     """
-    species = ["Species 1", "Species 2", "Species 3"]
+
+    filter = request.GET.get('filter')
+    species = enrichment_analysis.search_species(filter)
+
     return JsonResponse({"species": species})
 
 def metadata_view(request):

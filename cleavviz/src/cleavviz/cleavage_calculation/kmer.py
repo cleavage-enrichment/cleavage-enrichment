@@ -1,4 +1,5 @@
 from collections import defaultdict
+from .constants import amino_acids
 
 site_columns = [
         "Site_P4", "Site_P3", "Site_P2", "Site_P1",
@@ -11,7 +12,7 @@ def build_kmer_index_and_background(fasta, k=6):
     '''
     kmer_index = defaultdict(list)
     protein_sequences = {}
-    background = defaultdict(int)
+    background = defaultdict(int, {aa: 1 for aa in amino_acids})
 
     for protein in fasta.itertuples():
         sequence = protein.sequence
@@ -36,6 +37,8 @@ def get_cleavage_sites(peptide_df, kmer_index, protein_sequences, k=6, sites = 4
 
     counts = defaultdict(lambda: defaultdict(int))
 
+    peptide_df = peptide_df[(peptide_df['Intensity'].notna()) & (peptide_df['Intensity'] != 0)]
+    
     for sequence in peptide_df["Sequence"]:
         candidates = kmer_index[sequence[:k]]
 

@@ -296,28 +296,42 @@ def get_plot(peptides, metadata, fastadata, formData: dict, enrichment_analysis)
         plot_limit = formData.pop("plot_limit", True)
 
         calculateCleavages = formData.pop("calculateCleavages", True)
-        useMerops = formData.pop("onlyStandardEnzymes", False)
+        useMerops = not formData.pop("onlyStandardEnzymes", True)
         enzymes = formData.pop("enzymes", [])
         species = formData.pop("species", [])
+
+        proteins = formData["proteins"]
+        metadataFilter = formData["metadatafilter"]
+
         data = barplot_data(peptides, metadata, fastadata, **formData)
 
-        if len(formData["proteins"]) != 0 and calculateCleavages:
-            results = enrichment_analysis.protein(formData["proteins"][0])
-            top_enzymes = results["enzymes"][:2]
-            motif_names = [k for k,v in top_enzymes]
-            motifs = [v["motif"] for k,v in top_enzymes]
-            cleavages = results["cleavages"]
-            mask = pd.Series(False, index=cleavages.index)
-            mask |= cleavages["name"].isin(motif_names)
-            cleavages = cleavages[mask]
-            
+        if len(proteins) != 0 and calculateCleavages:
+            enrichment_analysis.useMerops = useMerops
+            enrichment_analysis.additionalEnzymes = enzymes
+            enrichment_analysis.species = species
+
+            results = enrichment_analysis.get_results(proteins[0],metadataFilter)
+
+            cleavages = []
+            motif_names = []
+            motifs = []
+            p_values= []
+
+            for enzyme, info in results.items():
+                motif_names.append(enzyme)
+                motifs.append(info["motif"])
+                p_values.append(info["p_value"])
+                for pos in info["positions"]:
+                    cleavages.append({"position": pos, "name": enzyme})
+
+            cleavages = pd.DataFrame(cleavages, columns=["position", "name"])
+            cleavages = cleavages.sort_values("position").reset_index(drop=True)            
 
         else:
             cleavages = None
             motif_names = None
             motifs = None
-
-        print("cleavages in data:",cleavages, motif_names, motifs)
+            p_values = None
 
         fig = create_bar_figure(**asdict(data),
                                     use_log_scale_y_pos=use_log_scale_y_pos,
@@ -327,7 +341,8 @@ def get_plot(peptides, metadata, fastadata, formData: dict, enrichment_analysis)
                                     plot_limit=plot_limit,
                                     cleavages=cleavages,
                                     motif_names=motif_names,
-                                    motifs=motifs
+                                    motifs=motifs,
+                                    motif_probabilities=p_values
                                 )
         return fig
     else:

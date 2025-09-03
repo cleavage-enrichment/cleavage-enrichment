@@ -78,7 +78,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
   }
 
   function loadEnzymes() {
-    fetch(`/api/enzymes?useMerops=${formData.useMerops}`)
+    fetch(`/api/enzymes`)
       .then((res) => res.json())
       .then((data) => {
         setEnzymes(data.enzymes || []);

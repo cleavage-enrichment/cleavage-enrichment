@@ -30,6 +30,7 @@ def calculate_pssms(counts_by_code, background):
             counts_dict = {aa: list(site_counts_clean[aa]) for aa in site_counts_clean.columns}
             m = motifs.Motif(counts=counts_dict, alphabet=alphabet)
             m.background = background
+            m.pseudocounts = 1
             pssm = m.pssm
             #relative_entropy = m.relative_entropy
 
@@ -82,7 +83,7 @@ def pssm_to_regex(pssms, sites):
 
 
 
-def create_regexs(enzyme_df, background, useMerops, sites=4):
+def create_regexs(enzyme_df, background, sites=4):
 
     counts_by_code = defaultdict(lambda: pd.DataFrame(0, index=site_columns, columns=amino_acids))
 
@@ -106,15 +107,13 @@ def create_regexs(enzyme_df, background, useMerops, sites=4):
     pssms = calculate_pssms(counts_by_code,background)
 
     regexs = pssm_to_regex(pssms, sites)
-
-    print("code_to_name",code_to_name)
     
     return pssms,regexs, code_to_name
 
 def get_filtered_enzyme_df(enzyme_df, useMerops, species, enzymes):
 
     mask = pd.Series(False, index=enzyme_df.index)
-
+    print("filter",useMerops, species, enzymes)
     if useMerops == False:
         mask |= enzyme_df["code"].isin(base_enzyme_codes)
 
@@ -128,4 +127,10 @@ def get_filtered_enzyme_df(enzyme_df, useMerops, species, enzymes):
         if enzymes is not None:
             mask |= enzyme_df["enzyme_name"].isin(enzymes)
 
-    return enzyme_df[mask]
+    print(mask)
+
+    filtered = enzyme_df[mask]
+
+    print(filtered)
+
+    return filtered

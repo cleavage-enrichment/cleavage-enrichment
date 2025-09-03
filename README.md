@@ -57,6 +57,13 @@ pnpm run dev
 followed https://aisaastemplate.com/blog/react-django-integration/
 
 
+# after changing libraries:
+poetry lock in cleavviz and django server
+
+# after changing frontend code:
+/frotend pnpm build
+
+
 
 
 

@@ -296,7 +296,7 @@ def get_plot(peptides, metadata, fastadata, formData: dict, enrichment_analysis)
         plot_limit = formData.pop("plot_limit", True)
 
         calculateCleavages = formData.pop("calculateCleavages", True)
-        only_use_standard_enzymes = not formData.pop("onlyStandardEnzymes", True)
+        use_standard_enzymes = formData.pop("useStandardEnzymes", True)
         enzymes = formData.pop("enzymes", [])
         species = formData.pop("species", [])
 
@@ -308,7 +308,7 @@ def get_plot(peptides, metadata, fastadata, formData: dict, enrichment_analysis)
         results = None
 
         if len(proteins) != 0 and calculateCleavages:
-            enrichment_analysis.only_use_standard_enzymes = only_use_standard_enzymes
+            enrichment_analysis.use_standard_enzymes = use_standard_enzymes
             enrichment_analysis.enzymes = enzymes
             enrichment_analysis.species = species
 

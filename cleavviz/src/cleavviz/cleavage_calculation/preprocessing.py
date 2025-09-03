@@ -29,22 +29,21 @@ def get_enzyme_df():
     return enzyme_df, possible_species, possible_enzymes
 
 
-def get_filtered_enzyme_df(enzyme_df, useMerops, species, enzymes):
+def get_filtered_enzyme_df(enzyme_df, use_standard_enzymes, species, enzymes):
 
     mask = pd.Series(False, index=enzyme_df.index)
 
-    if useMerops == False:
+    if species is None and enzymes is None and not use_standard_enzymes:
+        return enzyme_df
+    
+    if use_standard_enzymes:
         mask |= enzyme_df["code"].isin(base_enzyme_codes)
 
-    else:
-        if species == None and enzymes == None:
-            return enzyme_df
-        
-        if species is not None:
-            mask |= enzyme_df["species"] == species
+    if species is not None:
+        mask |= enzyme_df["species"] == species
 
-        if enzymes is not None:
-            mask |= enzyme_df["enzyme_name"].isin(enzymes)
+    if enzymes is not None:
+        mask |= enzyme_df["enzyme_name"].isin(enzymes)
 
     filtered = enzyme_df[mask]
 

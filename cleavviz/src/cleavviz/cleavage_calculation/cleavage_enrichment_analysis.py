@@ -17,7 +17,7 @@ class CleavageEnrichmentAnalysis:
     _peptide_df = None
     _metadata = None
 
-    only_use_standard_enzymes = True
+    use_standard_enzymes = True
     species = None
     enzymes = None
     possible_species = None
@@ -39,7 +39,7 @@ class CleavageEnrichmentAnalysis:
         object.__setattr__(self, key, value)
 
         # results have to be recalculated if one of these properties changes
-        if key in {"species", "enzymes", "only_use_standard_enzymes"}:
+        if key in {"species", "enzymes", "use_standard_enzymes"}:
             object.__setattr__(self, "_calculated", False)
 
     def set_fasta(self, fasta):
@@ -64,7 +64,7 @@ class CleavageEnrichmentAnalysis:
         return accumulate_results(self._result, proteinID, metadata_filter)
 
     def calculate(self):
-        filtered_enzyme_df = get_filtered_enzyme_df(self._enzyme_df, self.only_use_standard_enzymes, self.species, self.enzymes)
+        filtered_enzyme_df = get_filtered_enzyme_df(self._enzyme_df, self.use_standard_enzymes, self.species, self.enzymes)
 
         #calculate position sepecific scoring matrices and regexes for each enzyme
         pssms, regexs, code_to_name = analyze_enzymes(filtered_enzyme_df, self._background, SITES)

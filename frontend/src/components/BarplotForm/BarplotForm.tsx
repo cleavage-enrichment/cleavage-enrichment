@@ -22,7 +22,7 @@ export type BarplotData = {
   plot_limit?: boolean;
 
   calculateCleavages: boolean;
-  useMerops: boolean;
+  useStandardEnzymes: boolean;
   enzymes: string[];
   species: string | null;
 };
@@ -49,7 +49,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
           plot_limit: true,
 
           calculateCleavages: false,
-          useMerops: true,
+          useStandardEnzymes: true,
           enzymes: [],
           species: null,
         };
@@ -111,7 +111,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
   useEffect(() => {
     formData.enzymes = [];
     loadEnzymes();
-  }, [formData.useMerops]);
+  }, [formData.useStandardEnzymes]);
 
   // for reference_group field
   function getReferenceGroupOptions() {
@@ -378,16 +378,16 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
         <FormControlLabel
           control={
             <Checkbox
-              checked={formData.useMerops}
+              checked={formData.useStandardEnzymes}
               onChange={(event) => {
                 setFormData((prev) => ({
                   ...prev,
-                  useMerops: event.target.checked,
+                  useStandardEnzymes: event.target.checked,
                 }));
               }}
             />
           }
-          label="Use Merops"
+          label="Use Standard Enzymes"
         />
       </FormGrid>
 

@@ -56,9 +56,11 @@ def calculate_count_sum(protein_sequence:str, peptides: pd.DataFrame, aggregatio
         if start is None:
             continue
         for i in range(start-1, end):
-            count[i] += 1
             if not math.isnan(peptide[PeptideDF.INTENSITY]):
-                intensity[i] += int(peptide[PeptideDF.INTENSITY])
+                peptide_intensity = int(peptide[PeptideDF.INTENSITY])
+                if peptide_intensity > 0:
+                    intensity[i] += peptide_intensity
+                    count[i] += 1
 
     return count, intensity
 

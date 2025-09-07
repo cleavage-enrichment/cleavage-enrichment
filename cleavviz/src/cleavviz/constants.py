@@ -3,6 +3,8 @@ class PeptideDF:
     PROTEIN_ID = "Protein ID"
     PEPTIDE_SEQUENCE = "Sequence"
     INTENSITY = "Intensity"
+    START = "Start"
+    END = "End"
 
 class Meta:
     SAMPLE = "Sample"

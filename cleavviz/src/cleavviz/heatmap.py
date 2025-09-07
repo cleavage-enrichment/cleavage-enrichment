@@ -61,7 +61,7 @@ def create_dendrogram(data_matrix: pd.DataFrame):
 
     data_matrix = data_matrix.iloc[dendro_leaves, :]
 
-    return fig
+    return fig, data_matrix
 
 
 def create_group_heatmap(fig, groups: pd.DataFrame, legend_y_offset = 0, color_palette=px.colors.qualitative.Dark2):
@@ -198,14 +198,12 @@ def create_heatmap_figure(
     elif color_groups is not None:
         color_groups = color_groups.set_index(df.index)
 
-    print("debug log data", df.values.max())
     if logarithmize_data:
         df = df.map(log)
-    print("debug log data", df.values.max())
 
     if dendrogram:
         # Create Dendrogram
-        fig = create_dendrogram(df)
+        fig, df = create_dendrogram(df)
 
         if color_groups is not None:
             color_groups = color_groups.loc[df.index,:]
@@ -218,7 +216,6 @@ def create_heatmap_figure(
     x = list(range(1, max_length + 1))
 
     customdata = df.map(lambda x: scientific_notation(x,3)).values
-    print("debug customdata", df.values.max())
     tickvals, ticktext = calculate_ticks(df.values.max(), use_log_scale)
 
     max_val = df.values.max()

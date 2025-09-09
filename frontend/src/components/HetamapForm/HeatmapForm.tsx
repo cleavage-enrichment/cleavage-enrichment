@@ -8,6 +8,7 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 
 import { HeatmapProps } from "./HeatmapForm.props";
+import { Typography } from "@mui/material";
 
 export type HeatmapData = {
   proteins: string[];
@@ -94,6 +95,7 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
 
   return (
     <>
+      <Typography variant="h6">Select Samples</Typography>
       <FormGrid size={{ xs: 12 }}>
         <Autocomplete
           id="protein"
@@ -146,6 +148,7 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
         </FormGrid>
       ))}
 
+      <Typography variant="h6">Display Settings</Typography>
       <FormGrid size={{ xs: 12 }}>
         <Autocomplete
           id="group_by"

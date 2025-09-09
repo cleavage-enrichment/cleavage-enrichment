@@ -42,10 +42,12 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
 
   return (
     <Grid container spacing={3}>
-      <SubsectionHeadline>Upload Data</SubsectionHeadline>
+      <SubsectionHeadline>File Upload</SubsectionHeadline>
       <UploadField name="Peptides" onFileUploaded={handleUploadComplete} />
       <UploadField name="Metadata" onFileUploaded={handleUploadComplete} />
       <UploadField name="Fastafile" onFileUploaded={handleUploadComplete} />
+
+      <SubsectionHeadline>Plot Settings</SubsectionHeadline>
       <FormGrid size={{ xs: 12 }}>
         <Autocomplete
           id="plottype"

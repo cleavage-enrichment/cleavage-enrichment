@@ -50,7 +50,8 @@ def get_filtered_enzyme_df(enzyme_df, use_standard_enzymes, species, enzymes):
     return filtered
 
 
-def get_cleavage_sites(peptide_df, kmer_index, protein_sequences, k=6, sites = 4):
+def get_cleavage_sites(peptide_df, kmer_index, protein_sequences, k=6):
+    print("preprocessing")
     '''
     Find cleavage sites for all peptides.
 
@@ -85,17 +86,17 @@ def get_cleavage_sites(peptide_df, kmer_index, protein_sequences, k=6, sites = 4
                     end_position = i + len(sequence)
                     break
         
-        n_term_window = "XX"*sites
-        c_term_window = "XX"*sites
+        n_term_window = "X"*8
+        c_term_window = "X"*8
 
         if matched_id:
             protein_sequence = protein_sequences[matched_id]
 
-            if (start_position > sites - 1):
-                n_term_window = str(protein_sequence[start_position-sites:start_position+sites])
+            if (start_position > 3):
+                n_term_window = str(protein_sequence[start_position-4:start_position+4])
 
-            if (end_position < len(protein_sequence) - sites):
-                c_term_window = str(protein_sequence[end_position-sites:end_position+sites])
+            if (end_position < len(protein_sequence) - 4):
+                c_term_window = str(protein_sequence[end_position-4:end_position+4])
 
         n_term_windows.append(n_term_window)
         c_term_windows.append(c_term_window)
@@ -103,7 +104,7 @@ def get_cleavage_sites(peptide_df, kmer_index, protein_sequences, k=6, sites = 4
         n_term_positions.append(start_position)
         c_term_positions.append(end_position)
 
-        for j in range(2*sites):
+        for j in range(8):
             counts[n_term_window[j]][site_columns[j]]+=1
             counts[c_term_window[j]][site_columns[j]]+=1
 

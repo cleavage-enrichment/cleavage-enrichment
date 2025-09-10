@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from Bio import motifs
 from collections import defaultdict
-from .constants import amino_acids, alphabet, site_columns, base_enzymes, base_enzyme_codes, base_enzyme_codes_without_P
+from .constants import amino_acids, alphabet, alphabet_index, site_columns, site_columns_index, base_enzymes, base_enzyme_codes, base_enzyme_codes_without_P
 
 def calculate_pssms(counts_by_code, background):
     '''
@@ -21,40 +21,25 @@ def calculate_pssms(counts_by_code, background):
     for code in counts_by_code:
 
         site_counts = counts_by_code[code]
-        empty_sites = site_counts[(site_counts == 0).all(axis=1)].index.tolist()
-        site_counts_clean = site_counts.drop(index = empty_sites)
-        full_pssm = pd.DataFrame(0.0, index=site_columns, columns=amino_acids)
+        counts_dict = {aa: list(site_counts[aa]) for aa in site_counts.columns}
+        m = motifs.Motif(counts=counts_dict, alphabet=alphabet)
+        m.background = background
+        m.pseudocounts = 1
+        pssm = m.pssm
 
-        if not site_counts_clean.empty:
-            counts_dict = {aa: list(site_counts_clean[aa]) for aa in site_counts_clean.columns}
-            m = motifs.Motif(counts=counts_dict, alphabet=alphabet)
-            m.background = background
-            m.pseudocounts = 1
-            pssm = m.pssm
+        pssm_array = np.array([[pssm[aa][i] for aa in alphabet] + [0] for i in range(len(site_columns))])
 
-            pssm_array = np.array([[pssm[aa][i] for aa in site_counts_clean.columns]
-                           for i in range(len(site_counts_clean))])
-
-            pssm_df = pd.DataFrame(
-                pssm_array,
-                index=site_counts_clean.index,
-                columns=site_counts_clean.columns
-            )
-
-            full_pssm.loc[site_counts_clean.index] = pssm_df
-
-        pssms[code] = full_pssm
+        pssms[code] = pssm_array
 
     return pssms
 
 
-def pssm_to_regex(pssms, sites):
+def pssm_to_regex(pssms):
     '''
     Create a regex patterns from position specific scoring matrices.
 
     args:
         pssms: List of all position specific scoring matrices for all enzyme candidates.
-        sites: #TODO
 
     returns:
         regexes: Dictionary of regex patterns for all enzyme candidates.   
@@ -65,14 +50,14 @@ def pssm_to_regex(pssms, sites):
     for code, pssm in pssms.items():
         if code in base_enzyme_codes:
             regex = base_enzymes[code]["regex"]
-            regexes[code] = regex[4-sites:4+sites]
+            regexes[code] = regex
             continue
         regex=[]
-        for site in site_columns:
-            enriched_aa_list = [aa for aa in amino_acids if pssm[aa][site] > 1.68]
+        for i in site_columns_index:
+            enriched_aa_list = [alphabet[j] for j in alphabet_index if pssm[i][j] > 1.68]
 
             if len(enriched_aa_list) == 0:
-                depleted_aa_list = [("!"+aa) for aa in amino_acids if pssm[aa][site] < -1.68]
+                depleted_aa_list = [("!"+alphabet[j]) for j in alphabet_index if pssm[i][j] < -1.68]
                 if len(enriched_aa_list):
                     regex.append(depleted_aa_list)
                 else:
@@ -80,19 +65,18 @@ def pssm_to_regex(pssms, sites):
             else:
                 regex.append(enriched_aa_list)
 
-        regexes[code] = regex[4-sites:4+sites]
+        regexes[code] = regex
     
     return regexes
 
 
-def analyze_enzymes(enzyme_df, background, sites=4):
+def analyze_enzymes(enzyme_df, background):
     '''
     Analyze all candidate enzymes, calculate position specific scoring matrices and create regex patterns
 
     args:
         enzyme_df: Pandas dataframe containing all enzyme candidates along with their observed cleavages.
         background: Dictionary with the total count of each amino acid.
-        sites: #TODO
 
     returns:
         pssms: List of all position specific scoring matrices for all enzyme candidates.
@@ -119,6 +103,6 @@ def analyze_enzymes(enzyme_df, background, sites=4):
                 counts_by_code[code].at["Site_P1prime",aa] = background[aa]
 
     pssms = calculate_pssms(counts_by_code,background)
-    regexes = pssm_to_regex(pssms, sites)
+    regexes = pssm_to_regex(pssms)
     
     return pssms, regexes, code_to_name

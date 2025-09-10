@@ -31,6 +31,13 @@ amino_acids = list(get_args(AminoAcid))
         
 alphabet= "".join(x for x in amino_acids)
 
+alphabet_with_X = alphabet + "X"
+
+alphabet_index = range(len(alphabet))
+
+aa_to_idx = {aa: i for i, aa in enumerate(alphabet)}
+aa_to_idx["X"] = 20
+
 three_to_one = {
     "Ala": "A", "Arg": "R", "Asn": "N", "Asp": "D", "Cys": "C",
     "Glu": "E", "Gln": "Q", "Gly": "G", "His": "H", "Ile": "I",
@@ -42,6 +49,8 @@ site_columns = [
         "Site_P4", "Site_P3", "Site_P2", "Site_P1",
         "Site_P1prime", "Site_P2prime", "Site_P3prime", "Site_P4prime"
     ]
+
+site_columns_index = range(len(site_columns))
 
 #Standard Enzymes with their regex patterns
     

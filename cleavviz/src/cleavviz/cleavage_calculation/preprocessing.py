@@ -31,6 +31,7 @@ def get_enzyme_df():
 
 def get_filtered_enzyme_df(enzyme_df, use_standard_enzymes, species, enzymes):
 
+
     mask = pd.Series(False, index=enzyme_df.index)
 
     if species == None and enzymes == None and not use_standard_enzymes:
@@ -51,7 +52,6 @@ def get_filtered_enzyme_df(enzyme_df, use_standard_enzymes, species, enzymes):
 
 
 def get_cleavage_sites(peptide_df, kmer_index, protein_sequences, k=6):
-    print("preprocessing")
     '''
     Find cleavage sites for all peptides.
 
@@ -71,12 +71,20 @@ def get_cleavage_sites(peptide_df, kmer_index, protein_sequences, k=6):
     c_term_positions = []
     proteinIDs = []
 
-    counts = defaultdict(lambda: defaultdict(int))
-    peptide_df = peptide_df[(peptide_df['Intensity'].notna()) & (peptide_df['Intensity'] != 0)]
+    peptide_df = peptide_df[(peptide_df['Intensity'].notna()) & (peptide_df['Intensity'] > 0)]
+
+    grouped = (
+        peptide_df.groupby("Sequence")
+        .agg({
+            "Sample": lambda s: list(set(s)),
+        })
+        .reset_index()
+    )
     
-    for sequence in peptide_df["Sequence"]:
-        candidates = kmer_index[sequence[:k]]
+    for sequence in grouped["Sequence"]:
+        candidates = kmer_index.get(sequence[:k],[])
         matched_id = None
+        start_position, end_position = None, None
 
         if candidates:
             for id,i in candidates:
@@ -104,14 +112,10 @@ def get_cleavage_sites(peptide_df, kmer_index, protein_sequences, k=6):
         n_term_positions.append(start_position)
         c_term_positions.append(end_position)
 
-        for j in range(8):
-            counts[n_term_window[j]][site_columns[j]]+=1
-            counts[c_term_window[j]][site_columns[j]]+=1
+    grouped['n_term_cleavage_window'] = n_term_windows
+    grouped['c_term_cleavage_window'] = c_term_windows
+    grouped['proteinID'] = proteinIDs
+    grouped['n_term_position'] = n_term_positions
+    grouped['c_term_position'] = c_term_positions
 
-    peptide_df['n_term_cleavage_window'] = n_term_windows
-    peptide_df['c_term_cleavage_window'] = c_term_windows
-    peptide_df['proteinID'] = proteinIDs
-    peptide_df['n_term_position'] = n_term_positions
-    peptide_df['c_term_position'] = c_term_positions
-
-    return peptide_df
+    return grouped

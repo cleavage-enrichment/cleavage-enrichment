@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./App.css";
-import { Form } from "./components/Form";
+import { Form, SubsectionHeadline } from "./components/Form";
 import { BackendPlot } from "./components/BackendPlot";
 import { UploadForm } from "./components/UploadForm/UploadForm";
 import {
@@ -67,43 +67,31 @@ function App() {
 
   return (
     <Box sx={{ width: "100%", minHeight: "100vh", overflow: "hidden" }}>
-      {/* Top Bar */}
+      {/* Main Content */}
       <Box
         sx={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          zIndex: 10,
-          backgroundColor: "grey.100",
-          color: "grey.800",
-          px: 3,
-          py: 2,
-          boxShadow: 2,
-          textAlign: "center",
+          p: 2,
+          height: isLargeScreen ? "100vh" : "auto",
         }}
       >
-        <Typography variant="h6" fontWeight="bold">
-          Cleavage Enrichment Dashboard
-        </Typography>
-      </Box>
-
-      {/* Main Content */}
-      <Box sx={{ pt: 8, px: 2 }}>
         <Grid
           container
           spacing={0}
           direction={isLargeScreen ? "row" : "column"}
           sx={{
-            height: isLargeScreen ? "calc(100vh - 64px)" : "auto",
+            height: isLargeScreen ? "100%" : "auto",
           }}
         >
           {/* Form Column */}
-          <Grid size={{ xs: 12, lg: 3 }}>
+          <Grid
+            size={{ xs: 12, lg: 3 }}
+            sx={{
+              height: isLargeScreen ? "100%" : "auto",
+              overflowY: "auto",
+            }}
+          >
             <Box
               sx={{
-                height: isLargeScreen ? "calc(100vh - 64px)" : "auto",
-                overflowY: isLargeScreen ? "auto" : "visible",
                 px: 2,
                 py: 2,
               }}
@@ -113,18 +101,20 @@ function App() {
           </Grid>
 
           {/* Plot Column */}
-          <Grid size={{ xs: 12, lg: logs.length > 0 ? 6 : 9 }}>
+          <Grid
+            size={{ xs: 12, lg: logs.length > 0 ? 6 : 9 }}
+            sx={{
+              height: isLargeScreen ? "100%" : "auto",
+              overflowY: "auto",
+            }}
+          >
             <Box
               sx={{
-                height: isLargeScreen ? "calc(100vh - 64px)" : "auto",
-                overflowY: isLargeScreen ? "auto" : "visible",
                 px: 2,
                 py: 2,
               }}
             >
-              <Typography variant="h6" gutterBottom>
-                Plot
-              </Typography>
+              <SubsectionHeadline>Plot</SubsectionHeadline>
               {isLoading ? (
                 <CircularProgress />
               ) : (
@@ -136,16 +126,20 @@ function App() {
           {/* Logs Column */}
 
           {logs.length > 0 && !isLoading && (
-            <Grid size={{ xs: 12, lg: 3 }}>
+            <Grid
+              size={{ xs: 12, lg: 3 }}
+              sx={{
+                height: isLargeScreen ? "100%" : "auto",
+                overflowY: "auto",
+              }}
+            >
               <Box
                 sx={{
-                  height: isLargeScreen ? "calc(100vh - 64px)" : "auto",
-                  overflowY: isLargeScreen ? "auto" : "visible",
                   px: 2,
                   py: 2,
                 }}
               >
-                <Typography variant="h6">Logs</Typography>
+                <SubsectionHeadline>Logs</SubsectionHeadline>
                 <Stack spacing={2}>
                   {logs.map((log, index) => (
                     <Alert key={index} severity={getSeverity(log)}>

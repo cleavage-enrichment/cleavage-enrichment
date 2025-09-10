@@ -39,7 +39,7 @@ def match_enzymes(df, trie, pssms, code_to_name, background):
         if n_codes[i] is not None:
             cleavage_sites.append(row.n_term_cleavage_window)
             proteinIDs.append(row.proteinID)
-            enzymes.append(code_to_name[n_codes[i]])
+            enzymes.append(code_to_name.get(n_codes[i], "unspecified cleavage"))
             positions.append(row.n_term_position)
             p_values.append(n_p_values[i])
             samples.append(row.Sample)
@@ -47,7 +47,7 @@ def match_enzymes(df, trie, pssms, code_to_name, background):
         if c_codes[i] is not None:
             cleavage_sites.append(row.c_term_cleavage_window)
             proteinIDs.append(row.proteinID)
-            enzymes.append(code_to_name[n_codes[i]])
+            enzymes.append(code_to_name.get(c_codes[i], "unspecified cleavage"))
             positions.append(row.c_term_position)
             p_values.append(c_p_values[i])
             samples.append(row.Sample)
@@ -86,11 +86,11 @@ def find_best_matches(windows, trie, pssms, mus, sigmas):
             if score > best_score:
                 best_score = score
                 best_match = c
-        if best_match != None:
+        if best_match is not None:
             all_codes.append(best_match)
             all_pvals.append(calculate_p_value(best_score, window, mus[best_match], sigmas[best_match]))
         else:
-            all_codes.append(None)
+            all_codes.append("unspecified cleavage")
             all_pvals.append(None)
 
     return all_codes, all_pvals

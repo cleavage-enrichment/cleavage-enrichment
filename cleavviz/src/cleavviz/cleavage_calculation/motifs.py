@@ -97,8 +97,7 @@ def analyze_enzymes(enzyme_df, background):
                 col_name = f"{pos}_{aa}"
                 if col_name in row and pd.notna(row[col_name]):
                     counts_by_code[code].at[pos, aa] = row[col_name]
-
-        for code in base_enzyme_codes_without_P:
+        if code in base_enzyme_codes_without_P:
             for aa in amino_acids:
                 counts_by_code[code].at["Site_P1prime",aa] = background[aa]
 

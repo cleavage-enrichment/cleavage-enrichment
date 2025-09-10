@@ -1,6 +1,5 @@
 import pandas as pd
-from collections import defaultdict
-from .constants import site_columns, base_enzyme_codes, base_enzymes
+from .constants import base_enzyme_codes, base_enzymes
 
 def get_enzyme_df():
     '''
@@ -34,7 +33,7 @@ def get_filtered_enzyme_df(enzyme_df, use_standard_enzymes, species, enzymes):
 
     mask = pd.Series(False, index=enzyme_df.index)
 
-    if species == None and enzymes == None and not use_standard_enzymes:
+    if (species == None) and (enzymes == None or enzymes == []) and (not use_standard_enzymes):
         return enzyme_df
     
     if use_standard_enzymes:

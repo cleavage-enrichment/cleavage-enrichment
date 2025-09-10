@@ -34,12 +34,12 @@ class CleavageEnrichmentAnalysis:
          self.possible_enzymes) = get_enzyme_df()
         
     def __setattr__(self, key, value):
-        object.__setattr__(self, key, value)
-        
         if ((key == "species" and self.species != value) or
             (key == "enzymes" and self.enzymes != value) or
             (key == "use_standard_enzymes" and self.use_standard_enzymes != value)):
             object.__setattr__(self, "_calculated", False)
+
+        object.__setattr__(self, key, value)
 
     def set_fasta(self, fasta):
         self._fasta = fasta

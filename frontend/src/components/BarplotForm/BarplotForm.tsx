@@ -6,6 +6,7 @@ import TextField from "@mui/material/TextField";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import { SubsectionHeadline, FormGrid } from "../Form/Form";
+import { Typography } from "@mui/material";
 
 export type BarplotData = {
   proteins: string[];
@@ -125,7 +126,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
 
   return (
     <>
-      <SubsectionHeadline> Select Data</SubsectionHeadline>
+      <Typography variant="h6">Select Samples</Typography>
       <FormGrid size={{ xs: 12 }}>
         <Autocomplete
           multiple
@@ -176,7 +177,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
         </FormGrid>
       ))}
 
-      <SubsectionHeadline> Plot Settings</SubsectionHeadline>
+      <Typography variant="h6">Display Settings</Typography>
       <FormGrid size={{ xs: 12 }}>
         <Autocomplete
           id="group_by"
@@ -356,7 +357,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
         />
       </FormGrid>
 
-      <SubsectionHeadline>Cleavage Settings</SubsectionHeadline>
+      <Typography variant="h6">Cleavage Settings</Typography>
       <FormGrid size={{ xs: 12 }}>
         <FormControlLabel
           control={

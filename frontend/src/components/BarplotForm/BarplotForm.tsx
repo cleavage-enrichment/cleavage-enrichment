@@ -108,12 +108,6 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
     onChange(formData);
   }, [formData]);
 
-  //reload enzyme options
-  useEffect(() => {
-    formData.enzymes = [];
-    loadEnzymes();
-  }, [formData.useStandardEnzymes]);
-
   // for reference_group field
   function getReferenceGroupOptions() {
     switch (formData.group_by) {

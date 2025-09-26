@@ -45,7 +45,7 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
       <SubsectionHeadline>File Upload</SubsectionHeadline>
       <UploadField name="Peptides" onFileUploaded={handleUploadComplete} />
       <UploadField name="Metadata" onFileUploaded={handleUploadComplete} />
-      <UploadField name="Fastafile" onFileUploaded={handleUploadComplete} />
+      <UploadField name="Proteins" onFileUploaded={handleUploadComplete} />
 
       <SubsectionHeadline>Plot Settings</SubsectionHeadline>
       <FormGrid size={{ xs: 12 }}>
@@ -56,8 +56,8 @@ export const Form: React.FC<FormProps> = ({ onChange }) => {
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Plot Type"
-              placeholder="Select Plot Type"
+              label="Plot type"
+              placeholder="Select plot type"
               required
             />
           )}

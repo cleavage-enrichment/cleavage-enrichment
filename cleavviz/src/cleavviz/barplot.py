@@ -271,7 +271,7 @@ def create_bar_figure(
         for i in range(number_of_motifs):
             motif_title = motif_names[i] if motif_names is not None else f""
             if motif_probabilities is not None and len(motif_probabilities) > i and motif_probabilities[i] is not None:
-                motif_title += f" (p={motif_probabilities[i]:.2f})"
+                motif_title += f"\n (p={motif_probabilities[i]:.2f})"
             
             logo = logo_plot(motifs[i],title=motif_title)
             fig.add_layout_image(
@@ -405,10 +405,10 @@ def create_bar_figure(
             # vertical lines through plots
             for i in range(1+barplot_offset, rows + barplot_offset + 1):
                 fig.add_vline(
-                    x=row['position'],
+                    x=row['position']+0.5,
                     line_width=1,
                     line_dash=dashtypes[plotpos%len(dashtypes)],
-                    line_color="black",
+                    line_color="#7c7c7c",
                     row=i,
                     col=1,
                 )
@@ -426,13 +426,13 @@ def create_bar_figure(
             if motifs is not None:
                 fig.add_shape(
                     type="line",
-                    x0=row['position'],
+                    x0=row['position']+0.5,
                     x1= motif_positions[plotpos] * max_x,
                     y0=0,
                     y1=1,
                     xref="x",
                     yref="y2 domain",
-                    line=dict(color="black", dash=dashtypes[plotpos%len(dashtypes)], width=1),
+                    line=dict(color="#7c7c7c", dash=dashtypes[plotpos%len(dashtypes)], width=1),
                 )
 
 

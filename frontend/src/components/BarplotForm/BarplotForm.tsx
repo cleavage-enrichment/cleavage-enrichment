@@ -131,7 +131,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
             <TextField
               {...params}
               label="Proteins"
-              placeholder="Select Proteins"
+              placeholder="Select proteins"
               required
             />
           )}
@@ -180,8 +180,8 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Group By"
-              placeholder="Select Group By"
+              label="Group by"
+              placeholder="Select group by"
               required
             />
           )}
@@ -203,8 +203,8 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Displayed Metric"
-              placeholder="Select Metric"
+              label="Displayed metric"
+              placeholder="Select metric"
               required
             />
           )}
@@ -226,8 +226,8 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Aggregation Method for Intensities"
-              placeholder="Select Aggregation Method"
+              label="Aggregation method for intensities"
+              placeholder="Select aggregation method"
               required
             />
           )}
@@ -250,8 +250,8 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Reference Group"
-                placeholder="Select Reference Group"
+                label="Reference group"
+                placeholder="Select reference group"
                 required
               />
             )}
@@ -279,7 +279,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
               }}
             />
           }
-          label="Logarithmize Data on positive y axis"
+          label="Log-transform data (positive y-axis)"
         />
       </FormGrid>
 
@@ -296,7 +296,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
               }}
             />
           }
-          label="Logarithmize Data on negative y axis"
+          label="Log-transform data (negative y-axis)"
         />
       </FormGrid>
 
@@ -313,7 +313,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
               }}
             />
           }
-          label="Use log scale on positive y axis"
+          label="Logarithmic scale (positive y-axis)"
         />
       </FormGrid>
 
@@ -330,7 +330,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
               }}
             />
           }
-          label="Use log scale on negative y axis"
+          label="Logarithmic scale (negative y-axis)"
         />
       </FormGrid>
 
@@ -365,7 +365,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
               }}
             />
           }
-          label="Calculate Cleavages"
+          label="Calculate cleavages"
         />
       </FormGrid>
 
@@ -382,7 +382,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
               }}
             />
           }
-          label="Use Standard Enzymes"
+          label="Use standard enzymes"
         />
       </FormGrid>
 
@@ -395,7 +395,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
             <TextField
               {...params}
               label="Enzymes"
-              placeholder="Select Enzymes"
+              placeholder="Select enzymes"
               required
             />
           )}
@@ -417,7 +417,7 @@ export const BarplotForm: React.FC<BarplotFormProps> = ({
             <TextField
               {...params}
               label="Species"
-              placeholder="Select Species"
+              placeholder="Select species"
               required
             />
           )}

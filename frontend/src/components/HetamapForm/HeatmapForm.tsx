@@ -105,7 +105,7 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
             <TextField
               {...params}
               label="Protein"
-              placeholder="Select Protein"
+              placeholder="Select protein"
               required
             />
           )}
@@ -157,8 +157,8 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Group By"
-              placeholder="Select Group By"
+              label="Group by"
+              placeholder="Select group by"
               required
             />
           )}
@@ -180,8 +180,8 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Displayed Metric"
-              placeholder="Select Metric"
+              label="Displayed metric"
+              placeholder="Select metric"
               required
             />
           )}
@@ -204,8 +204,8 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Aggregation Method for Intensities"
-                placeholder="Select Aggregation Method"
+                label="Aggregation method for intensities"
+                placeholder="Select aggregation method"
                 required
               />
             )}
@@ -228,8 +228,8 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Colored Metadata"
-              placeholder="Select Colored Metadata"
+              label="Colored metadata"
+              placeholder="Select colored metadata"
             />
           )}
           value={formData.colored_metadata}
@@ -255,7 +255,7 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
               }}
             />
           }
-          label="Logarithmize Data"
+          label="Log-transform data"
         />
       </FormGrid>
 
@@ -272,7 +272,7 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
               }}
             />
           }
-          label="Use Logarithmic Scale"
+          label="Logarithmic scale"
         />
       </FormGrid>
 
@@ -289,7 +289,7 @@ export const HeatmapForm: React.FC<HeatmapProps> = ({
               }}
             />
           }
-          label="Show Dendrogram"
+          label="Apply clustering"
         />
       </FormGrid>
     </>

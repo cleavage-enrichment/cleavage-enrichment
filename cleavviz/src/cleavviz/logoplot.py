@@ -29,6 +29,7 @@ DEFAULT_COLORS = {
     'V': 'tomato',        # valine
     'B': 'lightgray',     # aspartic acid or asparagine
     'Z': 'gray',          # glutamic acid or glutamine
+    'X': 'black',
 }
 
 def logo_plot(df, title = "", colors=DEFAULT_COLORS):

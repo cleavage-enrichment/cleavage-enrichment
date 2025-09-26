@@ -219,7 +219,7 @@ def barplot_data(peptides: pd.DataFrame, metadata: pd.DataFrame, fastadata: pd.D
     """
 
     output = BARPLOTDATA(
-        title = "Barplot",
+        title = ", ".join(proteins) if proteins else "Barplot",
         pos_df = None,
         neg_df = None,
         legend_pos = "",
@@ -242,7 +242,6 @@ def barplot_data(peptides: pd.DataFrame, metadata: pd.DataFrame, fastadata: pd.D
         raise ValueError("No metric specified for barplot data.")
 
     intensity_df, count_df, _ = plot_data(peptides, metadata, fastadata, proteins, aggregation_method=aggregation_method, group_by=group_by, metadatafilter=metadatafilter)
-
     isReferenceMode = (reference_group is not None) and (metric != Metric.INTENSITY_COUNT)
     output.reference_mode = isReferenceMode
 
@@ -263,7 +262,7 @@ def barplot_data(peptides: pd.DataFrame, metadata: pd.DataFrame, fastadata: pd.D
         
     if metric == Metric.COUNT:
         output.legend_pos = f"Count"
-        output.legend_pos = f"Count of reference"
+        output.legend_neg = f"Count of reference"
         if isReferenceMode:
             reference_row = count_df.loc[reference_group]
             output.neg_df = pd.DataFrame([reference_row]*(len(count_df)-1), index = [reference_group]* (len(count_df)-1))

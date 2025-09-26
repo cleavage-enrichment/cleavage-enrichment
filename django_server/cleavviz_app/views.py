@@ -37,7 +37,7 @@ def upload_view(request, logger):
 
     peptide_file = request.FILES.get('Peptides', None)
     meta_file = request.FILES.get('Metadata', None)
-    fasta_file = request.FILES.get('Fastafile', None)
+    fasta_file = request.FILES.get('Proteins', None)
 
     if peptide_file is not None:
         peptides = read_peptides(peptide_file)

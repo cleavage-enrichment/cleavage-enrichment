@@ -1,67 +1,39 @@
-# software
-- it works for uniprot fasta files
+# Installation
+## Using Docker
+1. Start docker on the host system.
+2. Clone the repository and move to `/django_server`.
+3. Run the django server by using for example `docker compose up`.
 
-# cleavage-enrichment
-tools:
-backend:
-- django
-- poetry for python version managing
-frontend:
-- react
-- vite
-- pnpm
+## Using Poetry
+1. Install Poetry.
+2. Clone the Repo.
+3. Move to `/django_server`.
+4. Run `poetry install`.
+5. Run `poetry run python manage.py runserver`
 
+## Using the cleavage package
+1. Install the package with your favorite packet manager. For example with `pip install cleavviz`.
+2. Import Cleaviz into your python code with `import cleavviz`.
+3. See `/cleavviz/README.md`.
 
-# setup
-## django_server
-- install poetry
-- cd django_server; poetry install
+## For development
+1. Do everything from the using Poetry section.
+2. Install pnpm
+3. Move to `/frontend`.
+4. Run `pnpm start`
 
-# run server
-## backend
-- poetry run python manage.py runserver
+# For development
+## build new frontend
+- for production: `pnpm build`
+- for development: `pnpm dev`
 
-## frontend
-- pnpm install
-- pnpm start
-
-### build new frontend
-- for production: pnpm build
-- for development: pnpm dev
-
-# run docker
-- sudo apt-get install git-lfs
-- git lfs install
-- git clone
-
-# update
-## python packages
+## update python packages
 - update all: poetry update
 - add something: poetry add ...
 - lock: poetry lock
 
-# how the repo was build
-poetry new backend
-cd backend
-poetry config virtualenvs.in-project true --local
-poetry add --group dev pytest
-poetry add django
-poetry add django-types django-stubs-ext
-poetry run python  djpoe/manage.py migrate
-
-cd ..
-pnpm create vite@latest frontend -- --template react
-cd frontend
-pnpm install
-pnpm run dev
-followed https://aisaastemplate.com/blog/react-django-integration/
-
-
-# after changing libraries:
-poetry lock in cleavviz and django server
-
-# after changing frontend code:
-/frotend pnpm build
+## after changing libraries:
+`poetry lock` in `/cleavviz` and `/django_server`
 
 
 
